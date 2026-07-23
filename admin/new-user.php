@@ -15,7 +15,7 @@ include_once "_subHeader.php"; ?>
                     </div>
                     <div class="card-body py-4">
                         <div class="alert" id="message" role="alert" style="display:none;"></div>
-                        <form action="../app/app.php" id="addUser_form" method="post">
+                        <form action="app/app.php" id="addUser_form" method="post">
                             <div class="mb-3">
                                 <label class="form-label" for="username">Username <span class="text-danger">*</span></label>
                                 <div class="input-group">
@@ -116,7 +116,7 @@ include_once "_subHeader.php"; ?>
                 });
             } else {
                 $.ajax({
-                    url: '../app/verifyUsername.php',
+                    url: 'app/verifyUsername.php',
                     type: 'POST',
                     data: { username: username, checkUsername: username },
                     success: function (usernameStatus) {

@@ -25,7 +25,7 @@ include_once '_subHeader.php'; ?>
                                 <small class="text-muted float-end"><?php echo htmlspecialchars($_SESSION['name'] ?? ''); ?></small>
                             </div>
                             <div class="card-body py-4">
-                                <form action="../app/app.php" method="POST" enctype="multipart/form-data">
+                                <form action="app/app.php" method="POST" enctype="multipart/form-data">
                                     <div class="mb-3">
                                         <label class="form-label" for="post_title">Post Title <span class="text-danger">*</span></label>
                                         <input type="text" class="form-control" id="post_title" name="post_title" value="<?php echo htmlspecialchars($postQuery['title'] ?? ''); ?>" required>

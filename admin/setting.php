@@ -24,7 +24,7 @@ if (mysqli_num_rows($selectR) > 0) {
                     <div class="d-flex align-items-start align-items-sm-center gap-4">
                         <img src="../assets/img/avatars/1.png" id="userImgShow" alt="user-avatar" class="d-block rounded" height="100" width="100" id="uploadedAvatar">
                         <div class="button-wrapper">
-                            <form action="../app/app.php" method="post" enctype="multipart/form-data">
+                            <form action="app/app.php" method="post" enctype="multipart/form-data">
                                 <label for="upload" class="btn btn-primary me-2 mb-4" tabindex="0">
                                     <span class="d-none d-sm-block">New photo</span>
                                     <i class="bx bx-upload d-block d-sm-none"></i>
@@ -37,7 +37,7 @@ if (mysqli_num_rows($selectR) > 0) {
                     </div>
                 </div>
                 <hr class="my-0">
-                <form action="../app/app.php" method="post">
+                <form action="app/app.php" method="post">
                     <div class="card-body">
                         <div class="row">
                             <?php if ($_SESSION['author_id'] == 1) { ?>

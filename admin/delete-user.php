@@ -12,29 +12,36 @@ if (isset($_GET['check-user'])) {
     $checkR = mysqli_query($conn, $checkQ);
     // find to the post table result in post table and filter
     if (mysqli_num_rows($checkR) > 0) {
-        $_SESSION['warning'] = '<b>Warning</b> User Data used for post. Try Again.';
-        echo "<script>window.location.href='../dashboard/view-user.php';</script>";
+        $_SESSION['warning'] = '<b>Warning:</b> User data is currently associated with a post. Cannot delete.';
+        header('Location: view-user.php');
+        exit();
     } else {
         // Check User for Delete permission only for owner
         if ($sessin_user != 1) {
-            $_SESSION['warning'] = '<b>Sorry</b> Your are not a Super Admin Or Website Owner Try Again.';
-            echo "<script>window.location.href='../dashboard/view-user.php';</script>";
+            $_SESSION['warning'] = '<b>Sorry:</b> You do not have Super Admin privileges to delete this user.';
+            header('Location: view-user.php');
+            exit();
         } else {
             if ($_SESSION['author_id'] != $sessin_user) {
-                $_SESSION['warning'] = '<b>Sorry</b> Session are not proper. Please Try Again.';
-                echo "<script>window.location.href='../dashboard/view-user.php';</script>";
+                $_SESSION['warning'] = '<b>Sorry:</b> Invalid session data. Please try again.';
+                header('Location: view-user.php');
+                exit();
             } else {
                 $deleteQ = "DELETE FROM `user` WHERE user_id = '{$userid}'";
                 if (mysqli_query($conn, $deleteQ)) {
-                    $_SESSION['success'] = 'User Delete Successsful..';
-                    echo "<script>window.location.href='../dashboard/view-user.php';</script>";
+                    $_SESSION['success'] = 'User deleted successfully.';
+                    header('Location: view-user.php');
+                    exit();
                 } else {
-                    $_SESSION['error'] = 'User Connect Delete Plz Try Again ..';
-                    echo "<script>window.location.href='../dashboard/view-user.php';</script>";
+                    $_SESSION['error'] = 'Failed to delete user. Please try again.';
+                    header('Location: view-user.php');
+                    exit();
                 }
             }
         }
     }
+} else {
+    header('Location: view-user.php');
+    exit();
 }
-
 ?>

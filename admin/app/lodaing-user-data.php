@@ -77,13 +77,13 @@ if (isset($_POST['setUser'])) {
                 if ($userI == 'N') {
                     echo "<button type='button' class='btn btn-danger' disabled>Rejected</button>";
                 } else {
-                    echo "<form action='../app/app.php' method='POST' class='d-inline'><input type='hidden' name='userR' value='{$fetchUser['user_id']}'><button type='submit' name='userRajected' class='btn btn-danger'>Reject</button></form>";
+                    echo "<form action='app/app.php' method='POST' class='d-inline'><input type='hidden' name='userR' value='{$fetchUser['user_id']}'><button type='submit' name='userRajected' class='btn btn-danger'>Reject</button></form>";
                 }
 
-                echo "<form action='../app/app.php' method='POST' class='d-inline'><input type='hidden' name='userA' value='{$fetchUser['user_id']}'><button type='submit' name='userApproved' class='btn btn-success'>Approve</button></form>";
+                echo "<form action='app/app.php' method='POST' class='d-inline'><input type='hidden' name='userA' value='{$fetchUser['user_id']}'><button type='submit' name='userApproved' class='btn btn-success'>Approve</button></form>";
 
             } elseif ($userI == 'Y') {
-                echo "<form action='../app/app.php' method='POST' class='d-inline'><input type='hidden' name='userR' value='{$fetchUser['user_id']}'><button type='submit' name='userRajected' class='btn btn-danger'>Reject</button></form>";
+                echo "<form action='app/app.php' method='POST' class='d-inline'><input type='hidden' name='userR' value='{$fetchUser['user_id']}'><button type='submit' name='userRajected' class='btn btn-danger'>Reject</button></form>";
                 echo "<button type='button' class='btn btn-success' disabled>Approved</button>";
             }
         }

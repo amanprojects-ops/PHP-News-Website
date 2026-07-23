@@ -43,13 +43,17 @@ CREATE TABLE `contact_us` (
 CREATE TABLE `post` (
   `post_id` int(11) NOT NULL,
   `title` varchar(1500) DEFAULT NULL,
+  `post_slug` varchar(255) DEFAULT NULL,
   `sort_details` varchar(250) DEFAULT NULL,
   `description` text DEFAULT NULL,
   `post_img` varchar(225) DEFAULT NULL,
   `category` varchar(100) DEFAULT NULL,
   `author` int(11) DEFAULT NULL,
   `postStatus` varchar(12) NOT NULL DEFAULT 'W',
-  `post_date` varchar(50) DEFAULT NULL
+  `post_date` varchar(50) DEFAULT NULL,
+  `meta_title` varchar(255) DEFAULT NULL,
+  `meta_description` text DEFAULT NULL,
+  `meta_keywords` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 --
 -- Table structure for table `settings`

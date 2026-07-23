@@ -15,7 +15,7 @@ include_once "_subHeader.php"; ?>
                         <div class="my-3 p-3 bg-light rounded d-flex align-items-center justify-content-center" style="min-height: 120px;">
                             <img class="img-fluid" id="webLogoShow" src="../assets/images/<?php echo htmlspecialchars($settingd['logo']); ?>" alt="<?php echo htmlspecialchars($settingd['websitename']); ?>" style="max-height: 100px;">
                         </div>
-                        <form action="../app/app.php" method="POST" enctype="multipart/form-data">
+                        <form action="app/app.php" method="POST" enctype="multipart/form-data">
                             <div class="input-group">
                                 <input type="file" class="form-control" id="webLogo" name="webLogo" required>
                                 <button class="btn btn-primary" type="submit" id="webLogobtn" name="webLogobtn">Upload</button>
@@ -31,7 +31,7 @@ include_once "_subHeader.php"; ?>
                         <div class="my-3 p-3 bg-light rounded d-flex align-items-center justify-content-center" style="min-height: 120px;">
                             <img class="img-fluid" id="webfaviconShow" src="../assets/images/<?php echo htmlspecialchars($settingd['favicon']); ?>" alt="<?php echo htmlspecialchars($settingd['websitename']); ?>" style="max-height: 80px;">
                         </div>
-                        <form action="../app/app.php" method="POST" enctype="multipart/form-data">
+                        <form action="app/app.php" method="POST" enctype="multipart/form-data">
                             <div class="input-group">
                                 <input type="file" class="form-control" id="webfavicon" name="webfavicon" required>
                                 <button class="btn btn-primary" type="submit" name="webfaviconbtn">Upload</button>
@@ -47,7 +47,7 @@ include_once "_subHeader.php"; ?>
                         <div class="my-3 p-3 bg-light rounded d-flex align-items-center justify-content-center" style="min-height: 120px;">
                             <img class="img-fluid" id="webwatterMarkShow" src="../assets/images/<?php echo htmlspecialchars($settingd['watterMark']); ?>" alt="<?php echo htmlspecialchars($settingd['websitename']); ?>" style="max-height: 100px;">
                         </div>
-                        <form action="../app/app.php" method="POST" enctype="multipart/form-data">
+                        <form action="app/app.php" method="POST" enctype="multipart/form-data">
                             <div class="input-group">
                                 <input type="file" class="form-control" id="webwatterMark" name="webwatterMark" required>
                                 <button class="btn btn-primary" type="submit" name="webwattermarkbtn">Upload</button>
@@ -67,7 +67,7 @@ include_once "_subHeader.php"; ?>
                         <span class="badge bg-label-primary">General Configuration</span>
                     </div>
                     <div class="card-body py-4">
-                        <form action="../app/app.php" method="POST">
+                        <form action="app/app.php" method="POST">
                             <div class="mb-3">
                                 <label class="form-label" for="webName">Website Name</label>
                                 <input type="text" class="form-control" id="webName" name="webName" value="<?php echo htmlspecialchars($settingd['websitename']); ?>" required>

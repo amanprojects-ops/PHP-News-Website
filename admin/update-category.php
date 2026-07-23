@@ -20,7 +20,7 @@ $categoryData = ($query && mysqli_num_rows($query) > 0) ? mysqli_fetch_assoc($qu
                     </div>
                     <div class="card-body py-4">
                         <?php if ($categoryData) { ?>
-                            <form method="POST" action="../app/app.php">
+                            <form method="POST" action="app/app.php">
                                 <div class="mb-3">
                                     <label class="form-label" for="categoryName">Category Name <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" id="categoryName" name="categoryName" value="<?php echo htmlspecialchars($categoryData['category_name'] ?? ''); ?>" required>

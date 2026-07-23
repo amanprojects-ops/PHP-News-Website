@@ -49,13 +49,13 @@ if (isset($_POST['set'])) {
                 if ($CategoryI == 'N') {
                     echo "<button type='button' class='btn btn-danger' disabled>Rejected</button>";
                 } else {
-                    echo "<form action='../app/app.php' method='POST' class='d-inline'><input type='hidden' name='categoryR' value='{$fetchCategory['category_id']}'><button type='submit' name='categoryRajected' class='btn btn-danger'>Reject</button></form>";
+                    echo "<form action='app/app.php' method='POST' class='d-inline'><input type='hidden' name='categoryR' value='{$fetchCategory['category_id']}'><button type='submit' name='categoryRajected' class='btn btn-danger'>Reject</button></form>";
                 }
 
-                echo "<form action='../app/app.php' method='POST' class='d-inline'><input type='hidden' name='categoryA' value='{$fetchCategory['category_id']}'><button type='submit' name='categoryApproved' class='btn btn-success'>Approve</button></form>";
+                echo "<form action='app/app.php' method='POST' class='d-inline'><input type='hidden' name='categoryA' value='{$fetchCategory['category_id']}'><button type='submit' name='categoryApproved' class='btn btn-success'>Approve</button></form>";
 
             } elseif ($CategoryI == 'Y') {
-                echo "<form action='../app/app.php' method='POST' class='d-inline'><input type='hidden' name='categoryR' value='{$fetchCategory['category_id']}'><button type='submit' name='categoryRajected' class='btn btn-danger'>Reject</button></form>";
+                echo "<form action='app/app.php' method='POST' class='d-inline'><input type='hidden' name='categoryR' value='{$fetchCategory['category_id']}'><button type='submit' name='categoryRajected' class='btn btn-danger'>Reject</button></form>";
                 echo "<button type='button' class='btn btn-success' disabled>Approved</button>";
             }
         }

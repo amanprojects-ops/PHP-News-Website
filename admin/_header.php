@@ -2,7 +2,7 @@
 include_once ('app/config.php');
 
 if (!isset($_SESSION['username'])) {
-  header("Location: index.php");
+  header('Location: index.php');
   exit();
 }
 
@@ -53,7 +53,7 @@ $url = $settingd['websiteUrl']; ?>
   <script src="../assets/admin/vendor/libs/apex-charts/apexcharts.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> 
   
-  <script src="../assets/admin/summernotes/jquery-3.4.1.slim.min.js"></script>
+  <script src="../assets/admin/vendor/libs/jquery/jquery.js"></script>
   <link rel="stylesheet" href="../assets/admin/summernotes/summernote-lite.min.css">
   <script src="../assets/admin/summernotes/summernote-lite.min.js"></script>
   
@@ -86,7 +86,7 @@ $url = $settingd['websiteUrl']; ?>
   }
   $request_url = basename($_SERVER['REQUEST_URI']);
   ?>
-  <?php include_once ('./_message.php'); ?>
+  
   <!-- Layout wrapper -->
   <div class="layout-wrapper layout-content-navbar">
     <div class="layout-container">
@@ -125,18 +125,18 @@ $url = $settingd['websiteUrl']; ?>
 } ?>">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
               <i class="menu-icon tf-icons bx bx-news"></i>
-              <div data-i18n="Layouts" style="font-weight: 600; letter-spacing: 0.3px;">Posts Dashboard</div>
+              <div data-i18n="Layouts" style="font-weight: 600; letter-spacing: 0.3px;">Posts</div>
             </a>
 
             <ul class="menu-sub">
               <li class="menu-item <?php if ($request_url == 'view-post.php') { echo 'active'; } ?>">
                 <a href="view-post.php" class="menu-link">
-                  <div data-i18n="Without menu">View All Posts</div>
+                  <div data-i18n="Without menu">View All</div>
                 </a>
               </li>
               <li class="menu-item <?php if ($request_url == 'new-post.php') { echo 'active'; } ?>">
                 <a href="new-post.php" class="menu-link">
-                  <div data-i18n="Without navbar">Create New Post</div>
+                  <div data-i18n="Without navbar">Create New</div>
                 </a>
               </li>              
             </ul>
@@ -148,18 +148,18 @@ $url = $settingd['websiteUrl']; ?>
 } ?>">
             <a href="javascript:void(0)" class="menu-link menu-toggle">
               <i class="menu-icon tf-icons bx bx-category-alt"></i>
-              <div data-i18n="Extended UI" style="font-weight: 600; letter-spacing: 0.3px;">Category Dashboard</div>
+              <div data-i18n="Extended UI" style="font-weight: 600; letter-spacing: 0.3px;">Categories</div>
             </a>
             <ul class="menu-sub ">
               <li class="menu-item <?php if ($request_url == 'view-category.php') { echo 'active'; } ?>">
                 <a href="view-category.php" class="menu-link">
-                  <div data-i18n="Perfect Scrollbar">View Categories</div>
+                  <div data-i18n="Perfect Scrollbar">View All</div>
                 </a>
               </li>
               <?php if ($_SESSION['role'] == 1) { ?>
               <li class="menu-item <?php if ($request_url == 'new-category.php') { echo 'active'; } ?>">
                 <a href="new-category.php" class="menu-link">
-                  <div data-i18n="Perfect Scrollbar">Add Category</div>
+                  <div data-i18n="Perfect Scrollbar">Create New</div>
                 </a>
               </li>
               <?php } ?>             
@@ -179,21 +179,21 @@ $url = $settingd['websiteUrl']; ?>
   } ?>">
             <a href="javascript:void(0);" class="menu-link menu-toggle">
               <i class="menu-icon tf-icons bx bx-group"></i>
-              <div data-i18n="Account Settings" style="font-weight: 600; letter-spacing: 0.3px;">Users Dashboard</div>
+              <div data-i18n="Account Settings" style="font-weight: 600; letter-spacing: 0.3px;">Users</div>
             </a>
             <ul class="menu-sub">
               <li class="menu-item <?php if ($request_url == 'view-user.php') {
     echo 'active';
   } ?>">
                 <a href="view-user.php" class="menu-link">
-                  <div data-i18n="Account">View Users</div>
+                  <div data-i18n="Account">View All</div>
                 </a>
               </li>
               <li class="menu-item <?php if ($request_url == 'new-user.php') {
     echo 'active';
   } ?>">
                 <a href="new-user.php" class="menu-link">
-                  <div data-i18n="Account">Add User</div>
+                  <div data-i18n="Account">Create New</div>
                 </a>
               </li>           
             </ul>

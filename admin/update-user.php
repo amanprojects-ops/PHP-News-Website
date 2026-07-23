@@ -25,7 +25,7 @@ if (isset($_GET['check-user'])) {
                             </small>
                         </div>
                         <div class="card-body py-4">
-                            <form action="../app/app.php" method="POST">
+                            <form action="app/app.php" method="POST">
                                 <div class="mb-3">
                                     <div class="row">
                                         <div class="col-md-6 mb-3 mb-md-0">

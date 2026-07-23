@@ -1,17 +1,21 @@
 <?php
-$sessions = ['success' => 'Login SuccessFully', 'error' => 'Login Failed', 'warning' => 'Login Warning'];
-foreach ($sessions as $session => $message) {
-  if (isset($_SESSION[$session])) {
+$sessionKeys = ['success', 'error', 'warning'];
+foreach ($sessionKeys as $key) {
+  if (isset($_SESSION[$key])) {
+    // Use the actual message from the session
+    $message = addslashes($_SESSION[$key]);
     echo "<script>
-    Swal.fire({
-      position: 'center',
-      icon: '$session',
-      title: '$message',
-      showConfirmButton: false,
-      timer: 2000
-    });
-    </script>";
-    unset($_SESSION[$session]);
+        Swal.fire({
+            toast: true,
+            position: 'center',
+            icon: '$key',
+            title: '$message',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+        });
+        </script>";
+    unset($_SESSION[$key]);
     break;
   }
 }

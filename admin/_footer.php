@@ -18,7 +18,7 @@
             </div>
           </footer>
           <!-- / Footer -->
-
+          <?php include_once ('./_message.php'); ?>
           <div class="content-backdrop fade"></div>
           </div>
           <!-- Content wrapper -->
@@ -33,7 +33,6 @@
 
           <?php include_once '_modalBox.php'; ?>
           <!-- Core JS -->
-          <script src="../assets/admin/vendor/libs/jquery/jquery.js"></script>
           <script src="../assets/admin/vendor/libs/popper/popper.js"></script>
           <script src="../assets/admin/vendor/js/bootstrap.js"></script>
           <script src="../assets/admin/vendor/libs/perfect-scrollbar/perfect-scrollbar.js"></script>

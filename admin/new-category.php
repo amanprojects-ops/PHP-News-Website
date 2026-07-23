@@ -14,7 +14,7 @@ include_once "_subHeader.php"; ?>
                         <small class="text-muted float-end">Creator: <?php echo htmlspecialchars($_SESSION['name'] ?? ''); ?></small>
                     </div>
                     <div class="card-body py-4">
-                        <form method="POST" action="../app/app.php">
+                        <form method="POST" action="app/app.php">
                             <div class="mb-3">
                                 <label class="form-label" for="categoryName">Category Name <span class="text-danger">*</span></label>
                                 <input type="text" class="form-control" id="categoryName" name="categoryName" placeholder="Enter Category Name (e.g. RESULTS, SPORTS)" required>
