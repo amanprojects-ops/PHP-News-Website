@@ -1,77 +1,153 @@
-<?php include_once "header.php"; ?>
+<?php 
+include_once "header.php";
 
+$site_name = htmlspecialchars($settings['websitename'] ?? 'Our News Portal');
+$site_email = htmlspecialchars($settings['workEmail'] ?? 'privacy@newswebsite.com');
+$site_url = htmlspecialchars($settings['websiteUrl'] ?? '#');
+?>
 
-<div class="container">
-    <div class="markdown prose w-full break-words dark:prose-invert light">
-        <h2>Privacy Policy</h2>
-        <p>Introduction</p>
-        <p>At connectbihar.in, we value our users' privacy and are committed to protecting it. This Privacy Policy outlines the types of personal information we collect, how we use it, and with whom we may share it. Our goal is to provide you with the best possible user experience while maintaining the privacy of your personal information.</p>
-        <p>Information Collection and Use</p>
-        <p>We collect personal information from you when you sign up for our newsletter, create an account, or participate in other activities that require you to provide personal information. This information may include your name, email address, and other contact information.</p>
-        <p>In addition, we may collect certain non-personal information, such as your IP address, browser type, operating system, and information about your online activity on our website. This information is used to help us understand how our website is being used and to improve the user experience.</p>
-        <p>Cookies and Tracking Technologies</p>
-        <p>We use cookies and other tracking technologies to improve the functionality of our website and to provide you with a better user experience. Cookies are small data files that are placed on your computer or device when you visit our website. They help us to remember your preferences and to understand how you interact with our website.</p>
-        <p>You can choose to disable cookies in your web browser, but this may limit your ability to use certain features of our website.</p>
-        <p>Information Sharing and Disclosure</p>
-        <p>We do not sell, trade, or otherwise transfer your personal information to third parties for their marketing purposes. However, we may disclose your personal information to third-party service providers who assist us in operating our website, conducting our business, or servicing you. These third-party service providers are required to maintain the confidentiality of your personal information and may not use it for any purpose other than as required to provide services to us.</p>
-        <p>We may also disclose your personal information if required by law or in response to a valid request from a law enforcement agency.</p>
-        <p>Data Security</p>
-        <p>We take the security of your personal information very seriously and have implemented appropriate technical and organizational measures to protect it. However, no data transmission over the Internet or any wireless network can be guaranteed to be 100% secure. As a result, while we strive to protect your personal information, we cannot guarantee its absolute security.</p>
-        <p>Changes to This Privacy Policy</p>
-        <p>We may update this Privacy Policy from time to time to reflect changes in our privacy practices. We will notify you of any material changes by posting the updated Privacy Policy on our website. Your continued use of our website following the posting of any changes constitutes your acceptance of those changes.</p>
-        <p>Contact Us</p>
-        <p>If you have any questions or concerns about this Privacy Policy or our privacy practices, please contact us at help@connectbihar.in.</p>
-        <p>Last updated: 09/02/2023</p>
+<main class="py-5 bg-light">
+  <div class="container">
+
+    <!-- Header Section -->
+    <div class="text-center mb-5">
+      <span class="badge bg-primary-soft text-primary px-3 py-2 rounded-pill fw-semibold mb-2">
+        <i class="fa fa-shield me-1"></i> Data Privacy &amp; Protection
+      </span>
+      <h1 class="display-6 fw-bold text-dark mb-2">Privacy Policy</h1>
+      <p class="text-muted mx-auto" style="max-width: 600px;">
+        Learn how <strong><?php echo $site_name; ?></strong> collects, protects, and handles your personal information responsibly.
+      </p>
     </div>
-</div>
+
+    <div class="row g-4">
+      
+      <!-- Policy Content Column -->
+      <div class="col-lg-8">
+        <div class="card border-0 shadow-sm rounded-4 p-4 p-md-5 bg-white">
+          
+          <div class="d-flex align-items-center justify-content-between border-bottom pb-3 mb-4">
+            <div>
+              <h3 class="h5 fw-bold text-dark mb-1">Privacy Framework</h3>
+              <small class="text-muted"><i class="fa fa-clock-o me-1"></i> Last updated: <?php echo date('F 01, Y'); ?></small>
+            </div>
+            <span class="badge bg-success-soft text-success rounded-pill px-3 py-2 fw-semibold" style="background-color: rgba(40, 167, 69, 0.1);">
+              <i class="fa fa-check-circle me-1"></i> Compliant Policy
+            </span>
+          </div>
+
+          <div class="privacy-sections">
+            
+            <!-- Section 1 -->
+            <div class="mb-4">
+              <h4 class="h6 fw-bold text-dark d-flex align-items-center gap-2">
+                <i class="fa fa-info-circle text-primary"></i> 1. Introduction
+              </h4>
+              <p class="text-muted small mb-0 ps-3">
+                At <strong><?php echo $site_name; ?></strong>, we are deeply committed to respecting your privacy and protecting the information you share with us. This Privacy Policy details the types of personal data we collect, how it is used, and the security measures we employ to keep your data safe.
+              </p>
+            </div>
+
+            <!-- Section 2 -->
+            <div class="mb-4">
+              <h4 class="h6 fw-bold text-dark d-flex align-items-center gap-2">
+                <i class="fa fa-database text-primary"></i> 2. Information We Collect
+              </h4>
+              <p class="text-muted small mb-2 ps-3">
+                We may collect personal and non-personal data when you interact with our website:
+              </p>
+              <ul class="text-muted small ps-4 mb-0">
+                <li class="mb-1"><strong>Personal Information:</strong> Name, email address, or contact details provided when submitting forms, newsletter registrations, or comments.</li>
+                <li class="mb-1"><strong>Automated Technical Data:</strong> IP address, browser type, operating system version, referring URLs, and device analytics gathered for performance optimization.</li>
+              </ul>
+            </div>
+
+            <!-- Section 3 -->
+            <div class="mb-4">
+              <h4 class="h6 fw-bold text-dark d-flex align-items-center gap-2">
+                <i class="fa fa-cookie text-primary"></i> 3. Cookies &amp; Tracking Technologies
+              </h4>
+              <p class="text-muted small mb-0 ps-3">
+                <strong><?php echo $site_name; ?></strong> uses cookies and standard web beacons to enhance your browsing experience, remember your preferences, and analyze site traffic patterns. You can manage or disable cookies via your browser settings; however, disabling them may impact specific interactive website features.
+              </p>
+            </div>
+
+            <!-- Section 4 -->
+            <div class="mb-4">
+              <h4 class="h6 fw-bold text-dark d-flex align-items-center gap-2">
+                <i class="fa fa-lock text-primary"></i> 4. Data Security Standards
+              </h4>
+              <p class="text-muted small mb-0 ps-3">
+                We employ technical, administrative, and physical security procedures to protect against unauthorized access, loss, misuse, or alteration of personal data. While we enforce high security safeguards, please note that no internet transmission is completely immune to security threats.
+              </p>
+            </div>
+
+            <!-- Section 5 -->
+            <div class="mb-4">
+              <h4 class="h6 fw-bold text-dark d-flex align-items-center gap-2">
+                <i class="fa fa-share-alt text-primary"></i> 5. Third-Party Disclosures
+              </h4>
+              <p class="text-muted small mb-0 ps-3">
+                We do not sell, trade, or rent your personal identification information to third parties. We may share generic aggregated demographic information not linked to any personal identification with trusted partners and advertisers.
+              </p>
+            </div>
+
+            <!-- Section 6 -->
+            <div class="mb-4">
+              <h4 class="h6 fw-bold text-dark d-flex align-items-center gap-2">
+                <i class="fa fa-user-shield text-primary"></i> 6. Your Rights &amp; Choices
+              </h4>
+              <p class="text-muted small mb-0 ps-3">
+                You have the right to request access to, correction of, or deletion of your personal data stored on our platform. You may also unsubscribe from optional email notifications at any time.
+              </p>
+            </div>
+
+            <!-- Section 7 -->
+            <div class="p-3 bg-light rounded-3 border">
+              <h5 class="h6 fw-bold text-dark mb-1"><i class="fa fa-envelope text-primary me-2"></i>Contact Privacy Officer</h5>
+              <p class="text-muted small mb-2">
+                If you have questions, feedback, or data privacy requests regarding <strong><?php echo $site_name; ?></strong>, reach out to our team:
+              </p>
+              <a href="mailto:<?php echo $site_email; ?>" class="fw-bold text-primary text-decoration-none">
+                <i class="fa fa-paper-plane me-1"></i> <?php echo $site_email; ?>
+              </a>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Quick Navigation Sidebar Column -->
+      <div class="col-lg-4">
+        <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white sticky-top" style="top: 20px;">
+          <h5 class="fw-bold text-dark mb-3 border-bottom pb-2"><i class="fa fa-compass text-primary me-2"></i>Quick Navigation</h5>
+          <div class="list-group list-group-flush">
+            <a href="aboutus.php" class="list-group-item list-group-item-action d-flex align-items-center justify-content-between py-3 border-0 rounded-3 mb-1">
+              <span><i class="fa fa-info-circle me-2 text-success"></i> About Us</span>
+              <i class="fa fa-chevron-right small text-muted"></i>
+            </a>
+            <a href="disclaimer.php" class="list-group-item list-group-item-action d-flex align-items-center justify-content-between py-3 border-0 rounded-3 mb-1">
+              <span><i class="fa fa-exclamation-triangle me-2 text-warning"></i> Disclaimer</span>
+              <i class="fa fa-chevron-right small text-muted"></i>
+            </a>
+            <a href="contactus.php" class="list-group-item list-group-item-action d-flex align-items-center justify-content-between py-3 border-0 rounded-3">
+              <span><i class="fa fa-envelope me-2 text-primary"></i> Contact Us</span>
+              <i class="fa fa-chevron-right small text-muted"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</main>
+
+<style>
+.bg-primary-soft {
+  background-color: rgba(30, 144, 255, 0.1);
+}
+</style>
+
 <?php include_once "footer.php"; ?>
-
-
-
-
-
-
-
-
-
-<!-- 
-
-
-
-
-
-<meta name="description" content="Get the latest breaking news and headlines from our news website. Stay up-to-date on current events, world news, sports news, and more.">
-    <meta name="keywords" content="breaking news, headlines, latest news, news updates, current events, world news, national news, local news, sports news, entertainment news, political news, business news, technology news, science news, health news, weather updates">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta charset="UTF-8">
-    <meta name="robots" content="index,follow">
-    <meta name="author" content="News Website">
-
-
-    <meta name="description" content="Get the latest breaking news and headlines from our news website. Stay up-to-date on current events, world news, sports news, and more.">
-    <meta name="keywords" content="breaking news, headlines, latest news, news updates, current events, world news, national news, local news, sports news, entertainment news, political news, business news, technology news, science news, health news, weather updates">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <meta name="robots" content="index, follow">
-    <meta name="revisit-after" content="7 days">
-    <link rel="canonical" href="https://www.newswebsite.com">
-    <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
-
-    <meta name="description" content="Get the latest breaking news and headlines from our news website. Stay up-to-date on current events, world news, sports news, and more.">
-    <meta name="keywords" content="breaking news, headlines, latest news, news updates, current events, world news, national news, local news, sports news, entertainment news, political news, business news, technology news, science news, health news, weather updates">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="robots" content="index, follow">
-    <meta name="googlebot" content="index, follow">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="author" content="News Website">
-
-
-
-
-
-
-
-
-
- -->

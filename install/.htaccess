@@ -1,0 +1,8 @@
+# ── Installation Wizard Security ──────────────────────────────────────────────
+# If install.lock exists, redirect all requests to a locked page
+# Remove this file (install.lock) to re-run the installer
+
+<Files "install.lock">
+    Order allow,deny
+    Deny from all
+</Files>

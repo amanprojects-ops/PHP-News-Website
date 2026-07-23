@@ -6,9 +6,9 @@
                 <!-- post-container -->
                 <div class="post-container overflow-auto">
                     <?php
-                    include "config.php";
-                    include_once "./system/_function.php";
-                    $settingd = mysqli_fetch_assoc(mysqli_query($conn,"SELECT websiteUrl FROM settings"));
+                    include 'config.php';
+                    include_once './database/functions.php';
+                    $settingd = mysqli_fetch_assoc(mysqli_query($conn, 'SELECT websiteUrl FROM settings'));
                     if (isset($_GET['id'])) {
                         $post_id = mysqli_real_escape_string($conn, base64_decode($_GET['id']));
                         $sql = "SELECT * FROM post
@@ -24,14 +24,13 @@
                     $result = mysqli_query($conn, $sql);
                     if (mysqli_num_rows($result) > 0) {
                         while ($row = mysqli_fetch_assoc($result)) {
-                        
-                        $url = $settingd['websiteUrl'];
-                        $title = $row['title'];
-                        $image = $url."/assets/postImage/".$row['post_img'];
-                        $description = $row['description'];
-                        
-                       $sociallink = sociallink($url,$title,$image,$description);
-                       ?>
+                            $url = $settingd['websiteUrl'];
+                            $title = $row['title'];
+                            $image = $url . '/assets/postImage/' . $row['post_img'];
+                            $description = $row['description'];
+
+                            $sociallink = sociallink($url, $title, $image, $description);
+                            ?>
                             <div class="post-content single-post">
                                 <h3><?php echo @$row['title']; ?></h3>
                                 <div class="card-body">
@@ -59,7 +58,7 @@
                                             <a href='<?php echo $sociallink['facebook']; ?>' target='_blank'><i class="fa fa-facebook" aria-hidden="true"></i>Facebook</a>
                                         </span>
                                         <!--<span>-->
-                                        <!--    <a hreg='<?php //echo $sociallink['telegram']; ?>' target='_blank'><i class="fa fa-telegram" aria-hidden="true"></i>Telegram</a>-->
+                                        <!--    <a hreg='<?php // echo $sociallink['telegram']; ?>' target='_blank'><i class="fa fa-telegram" aria-hidden="true"></i>Telegram</a>-->
                                         <!--</span>-->
                                         <span>
                                             <a href='<?php echo $sociallink['linkedin']; ?>' target='_blank'><i class="fa fa-linkedin" aria-hidden="true"></i>Linkedin</a>
@@ -75,11 +74,12 @@
                         <?php
                         }
                     } else {
-                        echo "<h2>Post Article can&#8216;t Found.</h2><hr>"; ?>
+                        echo '<h2>Post Article can&#8216;t Found.</h2><hr>';
+                        ?>
 
                         <div class="row">
                             <?php
-                            include "config.php";
+                            include 'config.php';
 
                             /* Calculate Offset Code */
                             // $limit = 3;
@@ -91,7 +91,7 @@
                             $result = mysqli_query($conn, $sql);
                             if (mysqli_num_rows($result) > 0) {
                                 while ($row = mysqli_fetch_assoc($result)) {
-                            ?>
+                                    ?>
                                     <div class="col-sm-4 mb-2">
                                         <div class="card">
                                             <div class="card-body">
@@ -117,10 +117,10 @@
                                         </div>
                                     </div>
                             <?php }
-                            }  ?>
+                            } ?>
                         </div>
 
-                    <?php }  ?>
+                    <?php } ?>
                 </div>
                 <!-- /post-container -->
             </div>
