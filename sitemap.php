@@ -9,7 +9,7 @@ if (isset($_GET['view']) && $_GET['view'] === 'html') {
   include_once 'header.php';
   
   // Fetch categories
-  $cat_res = mysqli_query($conn, "SELECT category_id, category_name FROM category ORDER BY category_name ASC");
+  $cat_res = mysqli_query($conn, "SELECT category_id, category_name, category_slug FROM category ORDER BY category_name ASC");
   $all_cats = [];
   if ($cat_res) {
     while ($c = mysqli_fetch_assoc($cat_res)) {
@@ -18,7 +18,7 @@ if (isset($_GET['view']) && $_GET['view'] === 'html') {
   }
   
   // Fetch posts
-  $post_res = mysqli_query($conn, "SELECT p.post_id, p.title, p.post_date, p.post_img, c.category_name 
+  $post_res = mysqli_query($conn, "SELECT p.post_id, p.title, p.post_slug, p.post_date, p.post_img, c.category_name, c.category_slug 
                                    FROM post p 
                                    LEFT JOIN category c ON p.category = c.category_id 
                                    WHERE p.postStatus = 'Y' 
@@ -60,11 +60,9 @@ if (isset($_GET['view']) && $_GET['view'] === 'html') {
           <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white">
             <h4 class="h5 fw-bold text-dark mb-3 border-bottom pb-2"><i class="fa fa-globe text-primary me-2"></i>Main Pages</h4>
             <div class="list-group list-group-flush">
-              <a href="index.php" class="list-group-item list-group-item-action border-0 px-0 text-dark fw-semibold"><i class="fa fa-home text-muted me-2"></i> Homepage</a>
-              <a href="aboutus.php" class="list-group-item list-group-item-action border-0 px-0 text-dark"><i class="fa fa-info-circle text-muted me-2"></i> About Us</a>
-              <a href="contactus.php" class="list-group-item list-group-item-action border-0 px-0 text-dark"><i class="fa fa-envelope text-muted me-2"></i> Contact Us</a>
-              <a href="privacy-policy.php" class="list-group-item list-group-item-action border-0 px-0 text-dark"><i class="fa fa-shield text-muted me-2"></i> Privacy Policy</a>
-              <a href="disclaimer.php" class="list-group-item list-group-item-action border-0 px-0 text-dark"><i class="fa fa-exclamation-triangle text-muted me-2"></i> Disclaimer</a>
+              <a href="<?php echo $baseurl; ?>/" class="list-group-item list-group-item-action border-0 px-0 text-dark fw-semibold"><i class="fa fa-home text-muted me-2"></i> Homepage</a>
+              <a href="<?php echo $baseurl; ?>/about-us" class="list-group-item list-group-item-action border-0 px-0 text-dark"><i class="fa fa-info-circle text-muted me-2"></i> About Us</a>
+              <a href="<?php echo $baseurl; ?>/contact-us" class="list-group-item list-group-item-action border-0 px-0 text-dark"><i class="fa fa-envelope text-muted me-2"></i> Contact Us</a>
             </div>
           </div>
 
@@ -72,7 +70,7 @@ if (isset($_GET['view']) && $_GET['view'] === 'html') {
             <h4 class="h5 fw-bold text-dark mb-3 border-bottom pb-2"><i class="fa fa-tags text-success me-2"></i>News Categories</h4>
             <div class="list-group list-group-flush">
               <?php foreach ($all_cats as $cat): ?>
-                <a href="category.php?cid=<?php echo base64_encode($cat['category_id']); ?>" class="list-group-item list-group-item-action border-0 px-0 text-dark d-flex justify-content-between align-items-center">
+                <a href="<?php echo getCategoryUrl($cat, $baseurl); ?>" class="list-group-item list-group-item-action border-0 px-0 text-dark d-flex justify-content-between align-items-center">
                   <span><i class="fa fa-folder-o text-muted me-2"></i> <?php echo htmlspecialchars($cat['category_name']); ?></span>
                   <i class="fa fa-chevron-right small text-muted"></i>
                 </a>
@@ -93,7 +91,7 @@ if (isset($_GET['view']) && $_GET['view'] === 'html') {
                     <div>
                       <span class="badge bg-primary-soft text-primary small mb-1"><?php echo htmlspecialchars($post['category_name'] ?? 'General'); ?></span>
                       <h6 class="mb-1 fw-bold" style="font-size: 0.875rem; line-height: 1.3;">
-                        <a href="single.php?id=<?php echo base64_encode($post['post_id']); ?>" class="text-dark text-decoration-none">
+                        <a href="<?php echo getPostUrl($post, $baseurl); ?>" class="text-dark text-decoration-none">
                           <?php echo htmlspecialchars(substr($post['title'], 0, 50)) . (strlen($post['title']) > 50 ? '...' : ''); ?>
                         </a>
                       </h6>
@@ -114,7 +112,7 @@ if (isset($_GET['view']) && $_GET['view'] === 'html') {
                   if (empty($author_name)) $author_name = $auth['username'];
                 ?>
                   <div class="col-6 col-md-4">
-                    <a href="author.php?aid=<?php echo base64_encode($auth['user_id']); ?>" class="card border p-3 text-decoration-none text-dark text-center rounded-3 bg-light hover-card">
+                    <a href="<?php echo getAuthorUrl($auth['username'], $baseurl); ?>" class="card border p-3 text-decoration-none text-dark text-center rounded-3 bg-light hover-card">
                       <div class="fw-bold"><i class="fa fa-user-circle me-1 text-primary"></i> <?php echo htmlspecialchars($author_name); ?></div>
                       <small class="text-muted">View Articles</small>
                     </a>
@@ -169,40 +167,42 @@ function print_sitemap_url($url, $lastmod, $changefreq = 'weekly', $priority = '
 $today = date('Y-m-d');
 
 // 1. Homepage URL
-print_sitemap_url($site_domain . '/index.php', $today, 'daily', '1.0');
+print_sitemap_url($site_domain . '/', $today, 'daily', '1.0');
 
 // 2. Static Public Pages
-print_sitemap_url($site_domain . '/aboutus.php', $today, 'monthly', '0.7');
-print_sitemap_url($site_domain . '/contactus.php', $today, 'monthly', '0.7');
-print_sitemap_url($site_domain . '/privacy-policy.php', $today, 'monthly', '0.6');
-print_sitemap_url($site_domain . '/disclaimer.php', $today, 'monthly', '0.6');
+print_sitemap_url($site_domain . '/about-us', $today, 'monthly', '0.7');
+print_sitemap_url($site_domain . '/contact-us', $today, 'monthly', '0.7');
 
 // 3. Category URLs
-$cat_query = "SELECT category_id FROM category ORDER BY category_id DESC";
+$cat_query = "SELECT category_id, category_slug FROM category ORDER BY category_id DESC";
 $cat_res = mysqli_query($conn, $cat_query);
 if ($cat_res) {
   while ($cat = mysqli_fetch_assoc($cat_res)) {
-    $cat_url = $site_domain . '/category.php?cid=' . base64_encode($cat['category_id']);
+    $cat_url = getCategoryUrl($cat, $site_domain);
     print_sitemap_url($cat_url, $today, 'daily', '0.9');
   }
 }
 
 // 4. Author URLs
-$author_query = "SELECT user_id FROM user ORDER BY user_id DESC";
+$author_query = "SELECT user_id, username FROM user ORDER BY user_id DESC";
 $author_res = mysqli_query($conn, $author_query);
 if ($author_res) {
   while ($auth = mysqli_fetch_assoc($author_res)) {
-    $auth_url = $site_domain . '/author.php?aid=' . base64_encode($auth['user_id']);
+    $auth_url = getAuthorUrl($auth['username'], $site_domain);
     print_sitemap_url($auth_url, $today, 'weekly', '0.6');
   }
 }
 
 // 5. Post URLs (with Google Image Sitemap Extension)
-$post_query = "SELECT post_id, title, post_date, post_img FROM post WHERE postStatus = 'Y' ORDER BY post_id DESC";
+$post_query = "SELECT p.post_id, p.title, p.post_slug, p.post_date, p.post_img, c.category_slug 
+               FROM post p 
+               LEFT JOIN category c ON p.category = c.category_id 
+               WHERE p.postStatus = 'Y' 
+               ORDER BY p.post_id DESC";
 $post_res = mysqli_query($conn, $post_query);
 if ($post_res) {
   while ($post = mysqli_fetch_assoc($post_res)) {
-    $post_url = $site_domain . '/single.php?id=' . base64_encode($post['post_id']);
+    $post_url = getPostUrl($post, $site_domain);
     $post_date = !empty($post['post_date']) ? date('Y-m-d', strtotime($post['post_date'])) : $today;
     
     $images = [];

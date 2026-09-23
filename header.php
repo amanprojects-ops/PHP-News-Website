@@ -656,8 +656,9 @@ switch ($page) {
             </button>
             <?php
             $cat_id = isset($_GET['cid']) ? base64_decode($_GET['cid']) : null;
+            $current_cat_slug = isset($_GET['slug']) ? strtolower(trim($_GET['slug'])) : '';
 
-            $menu_sql = "SELECT DISTINCT category.category_id, category.category_name, post.category, post.postStatus 
+            $menu_sql = "SELECT DISTINCT category.category_id, category.category_name, category.category_slug, post.category, post.postStatus 
                          FROM category 
                          LEFT JOIN post ON post.category = category.category_id 
                          WHERE post.postStatus = 'Y'";
@@ -665,15 +666,15 @@ switch ($page) {
             ?>
             <ul class="menu" id="navMenu">
               <li>
-                <a class="<?php echo ($auth === 'index.php') ? 'active' : ''; ?>" href="./">Home</a>
+                <a class="<?php echo ($auth === 'index.php') ? 'active' : ''; ?>" href="<?php echo $baseurl; ?>/">Home</a>
               </li>
               <?php
               if ($menu_result && mysqli_num_rows($menu_result) > 0) {
                 while ($row = mysqli_fetch_assoc($menu_result)) {
-                  $active = ($cat_id !== null && $row['category_id'] == $cat_id) ? 'active' : '';
-                  $encoded_cid = base64_encode($row['category_id']);
+                  $active = (($cat_id !== null && $row['category_id'] == $cat_id) || (!empty($current_cat_slug) && strtolower($row['category_slug'] ?? '') === $current_cat_slug)) ? 'active' : '';
+                  $catUrl = getCategoryUrl($row, $baseurl);
                   $category_name = htmlspecialchars($row['category_name'] ?? '');
-                  echo "<li><a class='{$active}' href='category.php?cid={$encoded_cid}'>{$category_name}</a></li>";
+                  echo "<li><a class='{$active}' href='{$catUrl}'>{$category_name}</a></li>";
                 }
               }
               ?>

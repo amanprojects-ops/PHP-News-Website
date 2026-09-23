@@ -7,7 +7,7 @@ if (!isset($conn)) {
 // Fetch Recent Posts for Sidebar Widget
 $sidebar_recent_posts = [];
 $sidebar_post_limit = $limit ?? 5;
-$sidebar_post_query = "SELECT p.post_id, p.title, p.post_date, p.post_img, p.category, c.category_name 
+$sidebar_post_query = "SELECT p.post_id, p.title, p.post_slug, p.post_date, p.post_img, p.category, c.category_name, c.category_slug 
                       FROM post p 
                       LEFT JOIN category c ON p.category = c.category_id 
                       WHERE p.postStatus = 'Y' 
@@ -21,7 +21,7 @@ if ($sidebar_post_res && mysqli_num_rows($sidebar_post_res) > 0) {
 
 // Fetch Popular Categories for Sidebar Widget
 $sidebar_categories = [];
-$sidebar_cat_query = "SELECT c.category_id, c.category_name, COUNT(p.post_id) as post_count 
+$sidebar_cat_query = "SELECT c.category_id, c.category_name, c.category_slug, COUNT(p.post_id) as post_count 
                       FROM category c 
                       LEFT JOIN post p ON c.category_id = p.category AND p.postStatus = 'Y' 
                       GROUP BY c.category_id 
@@ -48,18 +48,21 @@ if ($sidebar_cat_res && mysqli_num_rows($sidebar_cat_res) > 0) {
         </div>
         
         <div class="sidebar-recent-list d-flex flex-column gap-3">
-          <?php foreach ($sidebar_recent_posts as $post): ?>
+          <?php foreach ($sidebar_recent_posts as $post): 
+            $sidebarPostUrl = getPostUrl($post, $baseurl);
+            $sidebarCatUrl = getCategoryUrl($post, $baseurl);
+          ?>
             <div class="d-flex gap-3 align-items-center sidebar-post-item pb-2 border-bottom border-light">
-              <a href="single.php?id=<?php echo base64_encode($post['post_id']); ?>" class="flex-shrink-0 rounded-3 overflow-hidden" style="width: 75px; height: 60px;">
+              <a href="<?php echo $sidebarPostUrl; ?>" class="flex-shrink-0 rounded-3 overflow-hidden" style="width: 75px; height: 60px;">
                 <img loading="lazy" src="<?php echo getPostThumb($post['post_img'] ?? '', $baseurl); ?>" alt="<?php echo htmlspecialchars($post['title']); ?>" style="width: 100%; height: 100%; object-fit: cover;" class="sidebar-img-zoom" onerror="this.onerror=null;this.src='<?php echo $baseurl; ?>/assets/images/post-placeholder.svg';">
               </a>
               
               <div class="flex-grow-1">
-                <a href="category.php?cid=<?php echo base64_encode($post['category']); ?>" class="badge bg-light text-primary text-decoration-none mb-1 fw-semibold small">
+                <a href="<?php echo $sidebarCatUrl; ?>" class="badge bg-light text-primary text-decoration-none mb-1 fw-semibold small">
                   <?php echo htmlspecialchars($post['category_name'] ?? 'News'); ?>
                 </a>
                 <h6 class="mb-1 fw-bold" style="font-size: 0.875rem; line-height: 1.35;">
-                  <a href="single.php?id=<?php echo base64_encode($post['post_id']); ?>" class="text-dark text-decoration-none sidebar-title-link">
+                  <a href="<?php echo $sidebarPostUrl; ?>" class="text-dark text-decoration-none sidebar-title-link">
                     <?php echo htmlspecialchars(substr($post['title'], 0, 55)) . (strlen($post['title']) > 55 ? '...' : ''); ?>
                   </a>
                 </h6>
@@ -82,8 +85,10 @@ if ($sidebar_cat_res && mysqli_num_rows($sidebar_cat_res) > 0) {
           <i class="fa fa-folder-open text-primary"></i> Popular Categories
         </h5>
         <div class="list-group list-group-flush">
-          <?php foreach ($sidebar_categories as $cat): ?>
-            <a href="category.php?cid=<?php echo base64_encode($cat['category_id']); ?>" class="list-group-item list-group-item-action d-flex align-items-center justify-content-between py-2 border-0 rounded-3 mb-1 px-2 hover-bg-light">
+          <?php foreach ($sidebar_categories as $cat): 
+            $catLink = getCategoryUrl($cat, $baseurl);
+          ?>
+            <a href="<?php echo $catLink; ?>" class="list-group-item list-group-item-action d-flex align-items-center justify-content-between py-2 border-0 rounded-3 mb-1 px-2 hover-bg-light">
               <span class="fw-semibold text-dark small"><i class="fa fa-angle-right me-2 text-primary"></i> <?php echo htmlspecialchars($cat['category_name']); ?></span>
               <span class="badge bg-primary-soft text-primary rounded-pill small"><?php echo (int) $cat['post_count']; ?></span>
             </a>
@@ -100,13 +105,15 @@ if ($sidebar_cat_res && mysqli_num_rows($sidebar_cat_res) > 0) {
         <i class="fa fa-tags text-success"></i> Trending Topics
       </h5>
       <div class="d-flex flex-wrap gap-2">
-        <?php foreach ($sidebar_categories as $cat): ?>
-          <a href="category.php?cid=<?php echo base64_encode($cat['category_id']); ?>" class="badge bg-light text-secondary text-decoration-none px-3 py-2 rounded-pill border hover-pill">
+        <?php foreach ($sidebar_categories as $cat): 
+          $catLink = getCategoryUrl($cat, $baseurl);
+        ?>
+          <a href="<?php echo $catLink; ?>" class="badge bg-light text-secondary text-decoration-none px-3 py-2 rounded-pill border hover-pill">
             #<?php echo htmlspecialchars($cat['category_name']); ?>
           </a>
         <?php endforeach; ?>
-        <a href="index.php" class="badge bg-light text-secondary text-decoration-none px-3 py-2 rounded-pill border hover-pill">#BreakingNews</a>
-        <a href="index.php" class="badge bg-light text-secondary text-decoration-none px-3 py-2 rounded-pill border hover-pill">#Updates</a>
+        <a href="<?php echo $baseurl; ?>/" class="badge bg-light text-secondary text-decoration-none px-3 py-2 rounded-pill border hover-pill">#EarnBro</a>
+        <a href="<?php echo $baseurl; ?>/" class="badge bg-light text-secondary text-decoration-none px-3 py-2 rounded-pill border hover-pill">#MakeMoneyOnline</a>
       </div>
     </div>
   </div>

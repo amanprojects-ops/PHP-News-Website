@@ -9,24 +9,41 @@
                     include 'config.php';
                     include_once './database/functions.php';
                     $settingd = mysqli_fetch_assoc(mysqli_query($conn, 'SELECT websiteUrl FROM settings'));
-                    if (isset($_GET['id'])) {
+                    if (isset($_GET['resolved_post_id'])) {
+                        $postId = (int)$_GET['resolved_post_id'];
+                        $sql = "SELECT post.*, category.category_name, category.category_slug, user.username, user.user_id 
+                                FROM post
+                                LEFT JOIN category ON post.category = category.category_id
+                                LEFT JOIN user ON post.author = user.user_id
+                                WHERE post.post_id = {$postId}";
+                    } elseif (isset($_GET['slug'])) {
+                        $slugSafe = mysqli_real_escape_string($conn, strtolower(trim($_GET['slug'])));
+                        $sql = "SELECT post.*, category.category_name, category.category_slug, user.username, user.user_id 
+                                FROM post
+                                LEFT JOIN category ON post.category = category.category_id
+                                LEFT JOIN user ON post.author = user.user_id
+                                WHERE post.post_slug = '{$slugSafe}'";
+                    } elseif (isset($_GET['id'])) {
                         $post_id = mysqli_real_escape_string($conn, base64_decode($_GET['id']));
-                        $sql = "SELECT * FROM post
-                        LEFT JOIN category ON post.category = category.category_id
-                        LEFT JOIN user ON post.author = user.user_id
-                        WHERE post.post_id = '{$post_id}' && postStatus = 'Y'";
+                        $sql = "SELECT post.*, category.category_name, category.category_slug, user.username, user.user_id 
+                                FROM post
+                                LEFT JOIN category ON post.category = category.category_id
+                                LEFT JOIN user ON post.author = user.user_id
+                                WHERE post.post_id = '{$post_id}' && postStatus = 'Y'";
                     } else {
-                        $sql = "SELECT * FROM post
-                            LEFT JOIN category ON post.category = category.category_id
-                            LEFT JOIN user ON post.author = user.user_id where postStatus = 'Y'";
+                        $sql = "SELECT post.*, category.category_name, category.category_slug, user.username, user.user_id 
+                                FROM post
+                                LEFT JOIN category ON post.category = category.category_id
+                                LEFT JOIN user ON post.author = user.user_id WHERE postStatus = 'Y' ORDER BY post.post_id DESC LIMIT 1";
                     }
 
                     $result = mysqli_query($conn, $sql);
-                    if (mysqli_num_rows($result) > 0) {
+                    if ($result && mysqli_num_rows($result) > 0) {
                         while ($row = mysqli_fetch_assoc($result)) {
-                            $url = $settingd['websiteUrl'];
+                            $postCanonicalUrl = getPostUrl($row, $baseurl);
+                            $url = !empty($postCanonicalUrl) ? $postCanonicalUrl : ($settingd['websiteUrl'] ?? $baseurl);
                             $title = $row['title'];
-                            $image = $url . '/assets/postImage/' . $row['post_img'];
+                            $image = getPostThumb($row['post_img'], $baseurl);
                             $description = $row['description'];
 
                             $sociallink = sociallink($url, $title, $image, $description);
@@ -37,11 +54,11 @@
                                     <div class="post-information">
                                         <span>
                                             <i class="fa fa-tags" aria-hidden="true"></i>
-                                            <a href='category.php?cid=<?php echo base64_encode($row['category']); ?>'><?php echo @$row['category_name']; ?></a>
+                                            <a href='<?php echo getCategoryUrl($row['category_slug'] ?? $row['category'], $baseurl); ?>'><?php echo htmlspecialchars($row['category_name'] ?? ''); ?></a>
                                         </span>
                                         <span>
                                             <i class="fa fa-user" aria-hidden="true"></i>
-                                            <a href='author.php?aid=<?php echo base64_encode($row['user_id']); ?>'><?php echo @$row['username']; ?></a>
+                                            <a href='<?php echo getAuthorUrl($row['username'], $baseurl); ?>'><?php echo htmlspecialchars($row['username'] ?? ''); ?></a>
                                         </span>
                                         <span>
                                             <i class="fa fa-calendar" aria-hidden="true"></i>
