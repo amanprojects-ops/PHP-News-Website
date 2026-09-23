@@ -2,35 +2,83 @@
 session_start();
 include_once 'config.php';
 
-// Reusable File Upload Function
-function handleUpload($fileKey, $targetDir, $allowedExts = ['jpeg', 'jpg', 'png', 'webp', 'avif', 'gif', 'svg'], $maxSize = 2097152)
+// Reusable Secure File Upload Function
+function handleUpload($fileKey, $targetDir, $allowedExts = ['jpeg', 'jpg', 'png', 'webp', 'ico'], $maxSize = 2097152)
 {
     if (!isset($_FILES[$fileKey]) || empty($_FILES[$fileKey]['name'])) {
-        return ['error' => 'No file uploaded.'];
+        return ['error' => 'No file selected for upload.'];
+    }
+
+    if ($_FILES[$fileKey]['error'] !== UPLOAD_ERR_OK) {
+        return ['error' => 'File upload error code: ' . $_FILES[$fileKey]['error']];
     }
 
     $file_name = $_FILES[$fileKey]['name'];
     $file_size = $_FILES[$fileKey]['size'];
     $file_tmp = $_FILES[$fileKey]['tmp_name'];
-    $file_ext = explode('.', $file_name);
-    $fileActualExt = strtolower(end($file_ext));
 
-    if (!in_array($fileActualExt, $allowedExts)) {
-        return ['error' => 'This file extension is not allowed. Please choose a valid image file.'];
+    // Enforce extension whitelist
+    $file_ext = pathinfo($file_name, PATHINFO_EXTENSION);
+    $fileActualExt = strtolower($file_ext);
+
+    if (!in_array($fileActualExt, $allowedExts, true)) {
+        return ['error' => 'File extension .' . htmlspecialchars($fileActualExt) . ' is not allowed. Only ' . implode(', ', $allowedExts) . ' files are permitted.'];
     }
 
     if ($file_size > $maxSize) {
-        return ['error' => 'File size must be 2MB or lower.'];
+        return ['error' => 'File size exceeds 2MB limit.'];
     }
 
-    $new_name = time() . '-' . basename($file_name);
-    $target = $targetDir . $new_name;
+    // Verify real MIME type using finfo
+    if (function_exists('finfo_open')) {
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime = finfo_file($finfo, $file_tmp);
+        finfo_close($finfo);
+
+        $allowedMimes = [
+            'jpg'  => ['image/jpeg', 'image/pjpeg'],
+            'jpeg' => ['image/jpeg', 'image/pjpeg'],
+            'png'  => ['image/png', 'image/x-png'],
+            'webp' => ['image/webp'],
+            'ico'  => ['image/x-icon', 'image/vnd.microsoft.icon', 'image/ico', 'application/octet-stream'],
+            'gif'  => ['image/gif']
+        ];
+
+        $validMime = false;
+        if (isset($allowedMimes[$fileActualExt]) && in_array($mime, $allowedMimes[$fileActualExt], true)) {
+            $validMime = true;
+        }
+
+        if (!$validMime && $fileActualExt !== 'ico') {
+            return ['error' => 'File content does not match allowed image MIME type. Upload rejected for security.'];
+        }
+    }
+
+    // Verify image integrity with getimagesize (for non-ico images)
+    if ($fileActualExt !== 'ico') {
+        $imgInfo = @getimagesize($file_tmp);
+        if ($imgInfo === false) {
+            return ['error' => 'Uploaded file is not a valid image.'];
+        }
+    }
+
+    // Cryptographically secure randomized filename to prevent collisions and directory traversal
+    $prefix = preg_replace('/[^a-zA-Z0-9_-]/', '', strtolower($fileKey));
+    $randomHash = bin2hex(random_bytes(6));
+    $new_name = $prefix . '_' . time() . '_' . $randomHash . '.' . $fileActualExt;
+
+    // Ensure target directory exists
+    if (!is_dir($targetDir)) {
+        @mkdir($targetDir, 0755, true);
+    }
+
+    $target = rtrim($targetDir, '/') . '/' . $new_name;
 
     if (move_uploaded_file($file_tmp, $target)) {
         return ['success' => $new_name];
     }
 
-    return ['error' => 'Failed to process file. Please try again.'];
+    return ['error' => 'Failed to process and move uploaded file.'];
 }
 
 // Only process POST requests
@@ -311,75 +359,239 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         redirect('../setting.php');
     }
-    // Settings Updation Codes =============================================================
-    elseif (isset($_POST['settingUpdate'])) {
-        $websiteName = mysqli_real_escape_string($conn, trim($_POST['webName']));
-        $webFooter = mysqli_real_escape_string($conn, trim($_POST['webFooter']));
-        $webEmail = mysqli_real_escape_string($conn, trim($_POST['webEmail']));
-        $webKeyword = mysqli_real_escape_string($conn, trim($_POST['webKeyword']));
-
-        $settingQ = "UPDATE `settings` SET `websitename`='{$websiteName}',`footerdesc`='{$webFooter}',`keywords`='{$webKeyword}',`workEmail`='{$webEmail}'";
-
-        if (mysqli_query($conn, $settingQ)) {
-            setSession('success', 'Website settings updated successfully.');
-        } else {
-            setSession('error', 'Failed to update website settings.');
+    // System Settings: General & Contact ===================================================
+    elseif (isset($_POST['settingUpdate']) || isset($_POST['updateGeneralSettings'])) {
+        if (!isset($_SESSION['role']) || (int)$_SESSION['role'] !== 1) {
+            setSession('error', 'Unauthorized access.');
+            redirect('../dashboard.php');
         }
-        redirect('../manage-website.php');
+        $csrf = $_POST['csrf_token'] ?? '';
+        if (empty($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $csrf)) {
+            setSession('error', 'Security verification failed (Invalid CSRF token).');
+            redirect('../manage-website.php?tab=general');
+        }
+
+        $webName = trim($_POST['webName'] ?? '');
+        $webTitle = trim($_POST['webTitle'] ?? '');
+        $webUrl = rtrim(trim($_POST['webUrl'] ?? ''), '/');
+        $webEmail = trim($_POST['webEmail'] ?? '');
+        $contactPhone = trim($_POST['contactPhone'] ?? '');
+        $contactAddress = trim($_POST['contactAddress'] ?? '');
+        $webFooter = trim($_POST['webFooter'] ?? '');
+        $maintenanceMode = isset($_POST['maintenanceMode']) ? 1 : 0;
+        $maintenanceMsg = trim($_POST['maintenanceMsg'] ?? '');
+
+        $stmt = mysqli_prepare($conn, "UPDATE `settings` SET `websitename`=?, `websiteTitle`=?, `websiteUrl`=?, `workEmail`=?, `contactPhone`=?, `contactAddress`=?, `footerdesc`=?, `maintenanceMode`=?, `maintenanceMsg`=?");
+        if ($stmt) {
+            mysqli_stmt_bind_param($stmt, "sssssssis", $webName, $webTitle, $webUrl, $webEmail, $contactPhone, $contactAddress, $webFooter, $maintenanceMode, $maintenanceMsg);
+            if (mysqli_stmt_execute($stmt)) {
+                setSession('success', 'General website settings updated successfully.');
+            } else {
+                setSession('error', 'Failed to update website settings: ' . mysqli_stmt_error($stmt));
+            }
+            mysqli_stmt_close($stmt);
+        } else {
+            setSession('error', 'Database query preparation failed.');
+        }
+        redirect('../manage-website.php?tab=general');
+    }
+    // System Settings: SEO & Social Profiles ===============================================
+    elseif (isset($_POST['updateSeoSettings'])) {
+        if (!isset($_SESSION['role']) || (int)$_SESSION['role'] !== 1) {
+            setSession('error', 'Unauthorized access.');
+            redirect('../dashboard.php');
+        }
+        $csrf = $_POST['csrf_token'] ?? '';
+        if (empty($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $csrf)) {
+            setSession('error', 'Security verification failed (Invalid CSRF token).');
+            redirect('../manage-website.php?tab=seo');
+        }
+
+        $webKeyword = trim($_POST['webKeyword'] ?? '');
+        $metaDescription = trim($_POST['metaDescription'] ?? '');
+        $metaAuthor = trim($_POST['metaAuthor'] ?? '');
+        $robotsIndex = trim($_POST['robotsIndex'] ?? 'index, follow');
+        $socialFacebook = trim($_POST['socialFacebook'] ?? '');
+        $socialTwitter = trim($_POST['socialTwitter'] ?? '');
+        $socialInstagram = trim($_POST['socialInstagram'] ?? '');
+        $socialLinkedin = trim($_POST['socialLinkedin'] ?? '');
+        $socialYoutube = trim($_POST['socialYoutube'] ?? '');
+        $socialWhatsapp = trim($_POST['socialWhatsapp'] ?? '');
+
+        $stmt = mysqli_prepare($conn, "UPDATE `settings` SET `keywords`=?, `metaDescription`=?, `metaAuthor`=?, `robotsIndex`=?, `socialFacebook`=?, `socialTwitter`=?, `socialInstagram`=?, `socialLinkedin`=?, `socialYoutube`=?, `socialWhatsapp`=?");
+        if ($stmt) {
+            mysqli_stmt_bind_param($stmt, "ssssssssss", $webKeyword, $metaDescription, $metaAuthor, $robotsIndex, $socialFacebook, $socialTwitter, $socialInstagram, $socialLinkedin, $socialYoutube, $socialWhatsapp);
+            if (mysqli_stmt_execute($stmt)) {
+                setSession('success', 'SEO and social profile settings updated successfully.');
+            } else {
+                setSession('error', 'Failed to update SEO settings: ' . mysqli_stmt_error($stmt));
+            }
+            mysqli_stmt_close($stmt);
+        } else {
+            setSession('error', 'Database query preparation failed.');
+        }
+        redirect('../manage-website.php?tab=seo');
+    }
+    // System Settings: Email & SMTP ========================================================
+    elseif (isset($_POST['updateSmtpSettings'])) {
+        if (!isset($_SESSION['role']) || (int)$_SESSION['role'] !== 1) {
+            setSession('error', 'Unauthorized access.');
+            redirect('../dashboard.php');
+        }
+        $csrf = $_POST['csrf_token'] ?? '';
+        if (empty($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $csrf)) {
+            setSession('error', 'Security verification failed (Invalid CSRF token).');
+            redirect('../manage-website.php?tab=smtp');
+        }
+
+        $mailDriver = trim($_POST['mailDriver'] ?? 'mail');
+        $smtpHost = trim($_POST['smtpHost'] ?? '');
+        $smtpPort = (int)($_POST['smtpPort'] ?? 587);
+        $smtpUser = trim($_POST['smtpUser'] ?? '');
+        $smtpPass = trim($_POST['smtpPass'] ?? '');
+        $smtpEncryption = trim($_POST['smtpEncryption'] ?? 'tls');
+        $smtpFromEmail = trim($_POST['smtpFromEmail'] ?? '');
+        $smtpFromName = trim($_POST['smtpFromName'] ?? '');
+
+        if ($smtpPass !== '') {
+            $stmt = mysqli_prepare($conn, "UPDATE `settings` SET `mailDriver`=?, `smtpHost`=?, `smtpPort`=?, `smtpUser`=?, `smtpPass`=?, `smtpEncryption`=?, `smtpFromEmail`=?, `smtpFromName`=?");
+            mysqli_stmt_bind_param($stmt, "ssisssss", $mailDriver, $smtpHost, $smtpPort, $smtpUser, $smtpPass, $smtpEncryption, $smtpFromEmail, $smtpFromName);
+        } else {
+            $stmt = mysqli_prepare($conn, "UPDATE `settings` SET `mailDriver`=?, `smtpHost`=?, `smtpPort`=?, `smtpUser`=?, `smtpEncryption`=?, `smtpFromEmail`=?, `smtpFromName`=?");
+            mysqli_stmt_bind_param($stmt, "ssissss", $mailDriver, $smtpHost, $smtpPort, $smtpUser, $smtpEncryption, $smtpFromEmail, $smtpFromName);
+        }
+
+        if ($stmt && mysqli_stmt_execute($stmt)) {
+            setSession('success', 'Email and SMTP configuration updated successfully.');
+            mysqli_stmt_close($stmt);
+        } else {
+            setSession('error', 'Failed to update SMTP settings.');
+        }
+        redirect('../manage-website.php?tab=smtp');
+    }
+    // System Settings: Analytics & Custom Code =============================================
+    elseif (isset($_POST['updateCustomCode'])) {
+        if (!isset($_SESSION['role']) || (int)$_SESSION['role'] !== 1) {
+            setSession('error', 'Unauthorized access.');
+            redirect('../dashboard.php');
+        }
+        $csrf = $_POST['csrf_token'] ?? '';
+        if (empty($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $csrf)) {
+            setSession('error', 'Security verification failed (Invalid CSRF token).');
+            redirect('../manage-website.php?tab=custom');
+        }
+
+        $googleAnalytics = trim($_POST['googleAnalytics'] ?? '');
+        $googleAdsense = trim($_POST['googleAdsense'] ?? '');
+        $customHeadCode = trim($_POST['customHeadCode'] ?? '');
+        $customFooterCode = trim($_POST['customFooterCode'] ?? '');
+
+        $stmt = mysqli_prepare($conn, "UPDATE `settings` SET `googleAnalytics`=?, `googleAdsense`=?, `customHeadCode`=?, `customFooterCode`=?");
+        if ($stmt) {
+            mysqli_stmt_bind_param($stmt, "ssss", $googleAnalytics, $googleAdsense, $customHeadCode, $customFooterCode);
+            if (mysqli_stmt_execute($stmt)) {
+                setSession('success', 'Custom scripts and analytics settings updated successfully.');
+            } else {
+                setSession('error', 'Failed to update custom scripts.');
+            }
+            mysqli_stmt_close($stmt);
+        } else {
+            setSession('error', 'Database query preparation failed.');
+        }
+        redirect('../manage-website.php?tab=custom');
     }
     // Settings Logo Updation Codes =========================================================
     elseif (isset($_POST['webLogobtn'])) {
+        if (!isset($_SESSION['role']) || (int)$_SESSION['role'] !== 1) {
+            setSession('error', 'Unauthorized access.');
+            redirect('../dashboard.php');
+        }
+        $csrf = $_POST['csrf_token'] ?? '';
+        if (empty($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $csrf)) {
+            setSession('error', 'Security verification failed.');
+            redirect('../manage-website.php?tab=branding');
+        }
+
         if (isset($_FILES['webLogo']['name']) && !empty($_FILES['webLogo']['name'])) {
             $uploadResult = handleUpload('webLogo', '../../assets/images/');
             if (isset($uploadResult['error'])) {
                 setSession('error', $uploadResult['error']);
             } else {
                 $webLogo = $uploadResult['success'];
-                $settingQ = "UPDATE `settings` SET `logo`='{$webLogo}'";
-                if (mysqli_query($conn, $settingQ)) {
+                $stmt = mysqli_prepare($conn, "UPDATE `settings` SET `logo`=?");
+                if ($stmt) {
+                    mysqli_stmt_bind_param($stmt, "s", $webLogo);
+                    mysqli_stmt_execute($stmt);
+                    mysqli_stmt_close($stmt);
                     setSession('success', 'Website logo updated successfully.');
                 } else {
                     setSession('error', 'Failed to update website logo.');
                 }
             }
         }
-        redirect('../manage-website.php');
+        redirect('../manage-website.php?tab=branding');
     }
     // Settings Favicon Updation Codes =============================================================
     elseif (isset($_POST['webfaviconbtn'])) {
+        if (!isset($_SESSION['role']) || (int)$_SESSION['role'] !== 1) {
+            setSession('error', 'Unauthorized access.');
+            redirect('../dashboard.php');
+        }
+        $csrf = $_POST['csrf_token'] ?? '';
+        if (empty($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $csrf)) {
+            setSession('error', 'Security verification failed.');
+            redirect('../manage-website.php?tab=branding');
+        }
+
         if (isset($_FILES['webfavicon']['name']) && !empty($_FILES['webfavicon']['name'])) {
-            $uploadResult = handleUpload('webfavicon', '../../assets/images/');
+            $uploadResult = handleUpload('webfavicon', '../../assets/images/', ['ico', 'png', 'jpg', 'jpeg', 'webp']);
             if (isset($uploadResult['error'])) {
                 setSession('error', $uploadResult['error']);
             } else {
                 $webfavicon = $uploadResult['success'];
-                $settingQ = "UPDATE `settings` SET `favicon`='{$webfavicon}'";
-                if (mysqli_query($conn, $settingQ)) {
+                $stmt = mysqli_prepare($conn, "UPDATE `settings` SET `favicon`=?");
+                if ($stmt) {
+                    mysqli_stmt_bind_param($stmt, "s", $webfavicon);
+                    mysqli_stmt_execute($stmt);
+                    mysqli_stmt_close($stmt);
                     setSession('success', 'Website favicon updated successfully.');
                 } else {
                     setSession('error', 'Failed to update website favicon.');
                 }
             }
         }
-        redirect('../manage-website.php');
+        redirect('../manage-website.php?tab=branding');
     }
     // Settings Watter Mark Updation Codes =========================================================
     elseif (isset($_POST['webwattermarkbtn'])) {
+        if (!isset($_SESSION['role']) || (int)$_SESSION['role'] !== 1) {
+            setSession('error', 'Unauthorized access.');
+            redirect('../dashboard.php');
+        }
+        $csrf = $_POST['csrf_token'] ?? '';
+        if (empty($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $csrf)) {
+            setSession('error', 'Security verification failed.');
+            redirect('../manage-website.php?tab=branding');
+        }
+
         if (isset($_FILES['webwatterMark']['name']) && !empty($_FILES['webwatterMark']['name'])) {
             $uploadResult = handleUpload('webwatterMark', '../../assets/images/');
             if (isset($uploadResult['error'])) {
                 setSession('error', $uploadResult['error']);
             } else {
                 $webwatterMark = $uploadResult['success'];
-                $settingQ = "UPDATE `settings` SET `watterMark`='{$webwatterMark}'";
-                if (mysqli_query($conn, $settingQ)) {
+                $stmt = mysqli_prepare($conn, "UPDATE `settings` SET `watterMark`=?");
+                if ($stmt) {
+                    mysqli_stmt_bind_param($stmt, "s", $webwatterMark);
+                    mysqli_stmt_execute($stmt);
+                    mysqli_stmt_close($stmt);
                     setSession('success', 'Website watermark updated successfully.');
                 } else {
                     setSession('error', 'Failed to update website watermark.');
                 }
             }
         }
-        redirect('../manage-website.php');
+        redirect('../manage-website.php?tab=branding');
     }
     // Change Password Code =======================================================================
     elseif (isset($_POST['changeUserPassword'])) {

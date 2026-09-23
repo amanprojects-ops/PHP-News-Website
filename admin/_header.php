@@ -214,15 +214,15 @@ if ($_SESSION['author_id'] == 1 && $_SESSION['role'] == 1) {
     echo 'active open';
   } ?>">
             <a href="javascript:void(0)" class="menu-link menu-toggle">
-              <i class="menu-icon tf-icons bx bx-cog"></i>
-              <div data-i18n="User interface" style="font-weight: 600; letter-spacing: 0.3px;">Manage Website</div>
+              <i class="menu-icon tf-icons bx bx-slider-alt"></i>
+              <div data-i18n="System Manager" style="font-weight: 600; letter-spacing: 0.3px;">System Manager</div>
             </a>
             <ul class="menu-sub">
               <li class="menu-item <?php if ($request_url == 'manage-website.php') {
     echo 'active';
   } ?>">
                 <a href="manage-website.php" class="menu-link">
-                  <div data-i18n="Accordion">Web Settings</div>
+                  <div data-i18n="System Settings">System Settings</div>
                 </a>
               </li>
               <li class="menu-item <?php if ($request_url == 'view-visitor.php') {
