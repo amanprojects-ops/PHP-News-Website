@@ -1,9 +1,14 @@
-RewriteEngine On 
-RewriteRule ^sitemap.xml/?$ sitemap.php
-
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteCond %{REQUEST_FILENAME} !-d
-    RewriteRule ^(.*)$ index.php?url=$1 [QSA,L]
+
+    # Exclude physical files and directories from routing
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Sitemap rewrite
+    RewriteRule ^sitemap\.xml/?$ sitemap.php [L]
+
+    # Route all requests to dynamic router
+    RewriteRule ^(.*)$ router.php?url=$1 [QSA,L]
 </IfModule>
