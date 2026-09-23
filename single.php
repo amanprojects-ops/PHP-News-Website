@@ -64,7 +64,7 @@
                                             <a href='<?php echo $sociallink['linkedin']; ?>' target='_blank'><i class="fa fa-linkedin" aria-hidden="true"></i>Linkedin</a>
                                         </span>
                                     </div>
-                                    <img class="single-feature-image" loading="lazy" src="./assets/postImage/<?php echo @$row['post_img']; ?>" alt="<?php echo $row['title']; ?>" />
+                                    <img class="single-feature-image" loading="lazy" src="<?php echo getPostThumb(@$row['post_img'], $baseurl); ?>" alt="<?php echo htmlspecialchars($row['title']); ?>" onerror="this.onerror=null;this.src='<?php echo $baseurl; ?>/assets/images/post-placeholder.svg';" />
                                     <p class="description">
                                         <?php echo @$row['description']; ?>
                                     </p>
@@ -98,7 +98,7 @@
 
                                                 <div class="recent-post">
                                                     <a class="post-img" href="single.php?id=<?php echo base64_encode(@$row['post_id']); ?>">
-                                                        <img class="card-img" <?php echo $row['title']; ?> src="./assets/postImage/<?php echo @$row['post_img']; ?>" alt="<?php echo substr(@$row['title'], 0, 50); ?>" style="width: 14rem;min-height: 7.5rem;" />
+                                                        <img class="card-img" loading="lazy" src="<?php echo getPostThumb(@$row['post_img'], $baseurl); ?>" alt="<?php echo htmlspecialchars(substr(@$row['title'], 0, 50)); ?>" style="width: 14rem; min-height: 7.5rem; object-fit: cover;" onerror="this.onerror=null;this.src='<?php echo $baseurl; ?>/assets/images/post-placeholder.svg';" />
                                                     </a>
                                                     <div class="post-content">
                                                         <h5><a href="single.php?id=<?php echo base64_encode(@$row['post_id']); ?>"><?php echo substr(@$row['title'], 0, 50); ?></a></h5>

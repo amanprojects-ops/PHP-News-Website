@@ -50,15 +50,9 @@ if ($sidebar_cat_res && mysqli_num_rows($sidebar_cat_res) > 0) {
         <div class="sidebar-recent-list d-flex flex-column gap-3">
           <?php foreach ($sidebar_recent_posts as $post): ?>
             <div class="d-flex gap-3 align-items-center sidebar-post-item pb-2 border-bottom border-light">
-              <?php if (!empty($post['post_img'])): ?>
-                <a href="single.php?id=<?php echo base64_encode($post['post_id']); ?>" class="flex-shrink-0 rounded-3 overflow-hidden" style="width: 75px; height: 60px;">
-                  <img loading="lazy" src="./assets/postImage/<?php echo htmlspecialchars($post['post_img']); ?>" alt="<?php echo htmlspecialchars($post['title']); ?>" style="width: 100%; height: 100%; object-fit: cover;" class="sidebar-img-zoom">
-                </a>
-              <?php else: ?>
-                <a href="single.php?id=<?php echo base64_encode($post['post_id']); ?>" class="flex-shrink-0 rounded-3 bg-light d-flex align-items-center justify-content-center text-muted" style="width: 75px; height: 60px;">
-                  <i class="fa fa-newspaper-o fs-4"></i>
-                </a>
-              <?php endif; ?>
+              <a href="single.php?id=<?php echo base64_encode($post['post_id']); ?>" class="flex-shrink-0 rounded-3 overflow-hidden" style="width: 75px; height: 60px;">
+                <img loading="lazy" src="<?php echo getPostThumb($post['post_img'] ?? '', $baseurl); ?>" alt="<?php echo htmlspecialchars($post['title']); ?>" style="width: 100%; height: 100%; object-fit: cover;" class="sidebar-img-zoom" onerror="this.onerror=null;this.src='<?php echo $baseurl; ?>/assets/images/post-placeholder.svg';">
+              </a>
               
               <div class="flex-grow-1">
                 <a href="category.php?cid=<?php echo base64_encode($post['category']); ?>" class="badge bg-light text-primary text-decoration-none mb-1 fw-semibold small">

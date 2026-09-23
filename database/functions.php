@@ -56,4 +56,34 @@ function base_url()
     return $_SERVER['SERVER_NAME'] . $_SERVER['REQUEST_URI'];
 }
 
+// Helper to safely get post image with lightweight SVG fallback
+function getPostThumb($imgName, $baseUrl = '')
+{
+    $placeholder = (!empty($baseUrl) ? rtrim($baseUrl, '/') : '.') . '/assets/images/post-placeholder.svg';
+    if (empty($imgName)) {
+        return $placeholder;
+    }
+    $cleanName = basename($imgName);
+    $diskPath = dirname(__DIR__) . '/assets/postImage/' . $cleanName;
+    if (!file_exists($diskPath) || filesize($diskPath) === 0) {
+        return $placeholder;
+    }
+    return (!empty($baseUrl) ? rtrim($baseUrl, '/') : '.') . '/assets/postImage/' . htmlspecialchars($cleanName);
+}
+
+// Helper to safely get website logo with fallback
+function getWebsiteLogo($logoName, $baseUrl = '')
+{
+    $placeholder = (!empty($baseUrl) ? rtrim($baseUrl, '/') : '.') . '/assets/images/logo-placeholder.svg';
+    if (empty($logoName)) {
+        return $placeholder;
+    }
+    $cleanName = basename($logoName);
+    $diskPath = dirname(__DIR__) . '/assets/images/' . $cleanName;
+    if (!file_exists($diskPath) || filesize($diskPath) === 0) {
+        return $placeholder;
+    }
+    return (!empty($baseUrl) ? rtrim($baseUrl, '/') : '.') . '/assets/images/' . htmlspecialchars($cleanName);
+}
+
 ?>

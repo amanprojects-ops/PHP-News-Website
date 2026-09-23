@@ -43,7 +43,7 @@
                 <div class="post-content">
                   <div class="row">
                     <div class="col-md-4">
-                      <a class="post-img" href="single.php?id=<?php echo base64_encode($row['post_id']); ?>"><img loading="lazy" src="./assets/postImage/<?php echo $row['post_img']; ?>" alt="" /></a>
+                      <a class="post-img" href="single.php?id=<?php echo base64_encode($row['post_id']); ?>"><img loading="lazy" src="<?php echo getPostThumb($row['post_img'], $baseurl); ?>" alt="<?php echo htmlspecialchars($row['title']); ?>" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null;this.src='<?php echo $baseurl; ?>/assets/images/post-placeholder.svg';" /></a>
                     </div>
                     <div class="col-md-8">
                       <div class="inner-content clearfix">

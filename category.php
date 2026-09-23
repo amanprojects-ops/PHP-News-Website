@@ -54,7 +54,7 @@
               <div class="post-content">
                 <div class="row">
                   <div class="col-md-4">
-                    <a class="post-img" href="single.php?id=<?php echo base64_encode(@$postD['post_id']); ?>"><img loading="lazy" src="./assets/postImage/<?php echo @$postD['post_img']; ?>" alt="<?php echo substr(@$postD['title'],0,100); ?>" /></a>
+                    <a class="post-img" href="single.php?id=<?php echo base64_encode(@$postD['post_id']); ?>"><img loading="lazy" src="<?php echo getPostThumb(@$postD['post_img'], $baseurl); ?>" alt="<?php echo htmlspecialchars(substr(@$postD['title'],0,100)); ?>" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null;this.src='<?php echo $baseurl; ?>/assets/images/post-placeholder.svg';" /></a>
                   </div>
                   <div class="col-md-8">
                     <div class="inner-content clearfix">

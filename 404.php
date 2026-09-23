@@ -105,9 +105,9 @@ if ($post_result && mysqli_num_rows($post_result) > 0) {
           <?php foreach ($recent_posts as $post): ?>
             <div class="col-md-4">
               <div class="card h-100 border-0 shadow-sm rounded-3 overflow-hidden hover-card">
-                <?php if (!empty($post['post_img'])): ?>
-                  <img src="./assets/postImage/<?php echo htmlspecialchars($post['post_img']); ?>" class="card-img-top" alt="<?php echo htmlspecialchars($post['title']); ?>" style="height: 180px; object-fit: cover;">
-                <?php endif; ?>
+                <a href="single.php?id=<?php echo base64_encode($post['post_id']); ?>">
+                  <img src="<?php echo getPostThumb($post['post_img'] ?? '', $baseurl); ?>" class="card-img-top" alt="<?php echo htmlspecialchars($post['title']); ?>" style="height: 180px; object-fit: cover;" onerror="this.onerror=null;this.src='<?php echo $baseurl; ?>/assets/images/post-placeholder.svg';">
+                </a>
                 <div class="card-body">
                   <span class="badge bg-primary-soft text-primary mb-2"><?php echo htmlspecialchars($post['category_name'] ?? 'General'); ?></span>
                   <h5 class="card-title h6 fw-bold">

@@ -189,9 +189,9 @@ if ($l_news_res && mysqli_num_rows($l_news_res) > 0) {
           <?php foreach ($latest_news as $news): ?>
             <div class="col-md-3">
               <div class="card h-100 border-0 shadow-sm rounded-3 overflow-hidden hover-card">
-                <?php if (!empty($news['post_img'])): ?>
-                  <img src="./assets/postImage/<?php echo htmlspecialchars($news['post_img']); ?>" class="card-img-top" alt="<?php echo htmlspecialchars($news['title']); ?>" style="height: 150px; object-fit: cover;">
-                <?php endif; ?>
+                <a href="single.php?id=<?php echo base64_encode($news['post_id']); ?>">
+                  <img src="<?php echo getPostThumb($news['post_img'] ?? '', $baseurl); ?>" class="card-img-top" alt="<?php echo htmlspecialchars($news['title']); ?>" style="height: 150px; object-fit: cover;" onerror="this.onerror=null;this.src='<?php echo $baseurl; ?>/assets/images/post-placeholder.svg';">
+                </a>
                 <div class="card-body p-3">
                   <span class="badge bg-primary-soft text-primary mb-2 small"><?php echo htmlspecialchars($news['category_name'] ?? 'General'); ?></span>
                   <h6 class="card-title fw-bold mb-2" style="font-size: 0.95rem; line-height: 1.4;">

@@ -36,7 +36,7 @@
                 <div class="post-content">
                   <div class="row">
                     <div class="col-md-4">
-                      <a class="post-img" href="single.php?id=<?php echo base64_encode($row['post_id']); ?>"><img loading="lazy" src="./assets/postImage/<?php echo $row['post_img']; ?>" alt="<?php echo $row['title']; ?>" /></a>
+                      <a class="post-img" href="single.php?id=<?php echo base64_encode($row['post_id']); ?>"><img loading="lazy" src="<?php echo getPostThumb($row['post_img'], $baseurl); ?>" alt="<?php echo htmlspecialchars($row['title']); ?>" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.onerror=null;this.src='<?php echo $baseurl; ?>/assets/images/post-placeholder.svg';" /></a>
                     </div>
                     <div class="col-md-8">
                       <div class="inner-content clearfix">
@@ -88,7 +88,7 @@
 
                                                 <div class="recent-post">
                                                     <a class="post-img" href="single.php?id=<?php echo base64_encode(@$row['post_id']); ?>">
-                                                        <img class="card-img" loading="lazy" src="./assets/postImage/<?php echo @$row['post_img']; ?>" alt="<?php echo substr(@$row['title'], 0, 50); ?>" style="width: 14rem;min-height: 7.5rem;" />
+                                                        <img class="card-img" loading="lazy" src="<?php echo getPostThumb(@$row['post_img'], $baseurl); ?>" alt="<?php echo htmlspecialchars(substr(@$row['title'], 0, 50)); ?>" style="width: 14rem; min-height: 7.5rem; object-fit: cover;" onerror="this.onerror=null;this.src='<?php echo $baseurl; ?>/assets/images/post-placeholder.svg';" />
                                                     </a>
                                                     <div class="post-content">
                                                         <h5><a href="single.php?id=<?php echo base64_encode(@$row['post_id']); ?>"><?php echo substr(@$row['title'], 0, 50); ?></a></h5>

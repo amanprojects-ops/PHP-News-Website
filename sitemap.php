@@ -89,9 +89,7 @@ if (isset($_GET['view']) && $_GET['view'] === 'html') {
               <?php foreach ($all_posts as $post): ?>
                 <div class="col-md-6">
                   <div class="p-3 border rounded-3 h-100 bg-light d-flex gap-3 align-items-center">
-                    <?php if (!empty($post['post_img'])): ?>
-                      <img src="./assets/postImage/<?php echo htmlspecialchars($post['post_img']); ?>" alt="" class="rounded" style="width: 55px; height: 55px; object-fit: cover;">
-                    <?php endif; ?>
+                    <img src="<?php echo getPostThumb($post['post_img'] ?? '', $baseurl); ?>" alt="" class="rounded" style="width: 55px; height: 55px; object-fit: cover;" onerror="this.onerror=null;this.src='<?php echo $baseurl; ?>/assets/images/post-placeholder.svg';">
                     <div>
                       <span class="badge bg-primary-soft text-primary small mb-1"><?php echo htmlspecialchars($post['category_name'] ?? 'General'); ?></span>
                       <h6 class="mb-1 fw-bold" style="font-size: 0.875rem; line-height: 1.3;">

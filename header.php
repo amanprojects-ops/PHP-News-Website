@@ -508,7 +508,40 @@ switch ($page) {
         display: none !important;
       }
     }
+
+    /* Lightweight Image Loading Skeleton & Fallback Styling */
+    img {
+      transition: opacity 0.3s ease-in-out;
+    }
+    .img-fallback-applied {
+      object-fit: cover !important;
+      background: #0f172a;
+    }
+    .post-img, .single-feature-image, .sidebar-img-zoom {
+      background: linear-gradient(110deg, #f1f5f9 8%, #e2e8f0 18%, #f1f5f9 33%);
+      background-size: 200% 100%;
+      animation: imgSkeletonShimmer 1.8s infinite linear;
+    }
+    @keyframes imgSkeletonShimmer {
+      to {
+        background-position-x: -200%;
+      }
+    }
   </style>
+
+  <script>
+    // Global ultra-fast fallback for broken or missing images across all public pages
+    document.addEventListener('error', function(e) {
+      if (e.target && e.target.tagName && e.target.tagName.toLowerCase() === 'img') {
+        var fallbackUrl = '<?php echo $baseurl; ?>/assets/images/post-placeholder.svg';
+        if (!e.target.dataset.fallbackApplied && e.target.src !== fallbackUrl) {
+          e.target.dataset.fallbackApplied = 'true';
+          e.target.src = fallbackUrl;
+          e.target.classList.add('img-fallback-applied');
+        }
+      }
+    }, true);
+  </script>
 </head>
 
 <body>
@@ -596,7 +629,7 @@ switch ($page) {
       <div class="main-header-inner">
         <!-- LOGO -->
         <a href="./" class="logo-container">
-          <img src="./assets/images/<?php echo htmlspecialchars($settings['logo'] ?? ''); ?>" alt="<?php echo htmlspecialchars($settings['websitename'] ?? ''); ?>" loading="lazy">
+          <img src="<?php echo getWebsiteLogo($settings['logo'] ?? '', $baseurl); ?>" alt="<?php echo htmlspecialchars($settings['websitename'] ?? 'News Portal'); ?>" loading="lazy" onerror="this.onerror=null;this.src='<?php echo $baseurl; ?>/assets/images/logo-placeholder.svg';">
         </a>
 
         <!-- SEARCH BAR -->
