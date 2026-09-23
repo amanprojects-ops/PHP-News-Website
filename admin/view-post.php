@@ -201,7 +201,17 @@ $categoryR = mysqli_query($conn, $categoryQ);
                                 ?>
                                 <tr>
                                     <td><strong><?php echo $serial ?></strong></td>
-                                    <td><strong><?php echo htmlspecialchars(substr($postD['title'], 0, 45)) . (strlen($postD['title']) > 45 ? '...' : ''); ?></strong></td>
+                                    <td>
+                                        <strong><?php echo htmlspecialchars(substr($postD['title'], 0, 45)) . (strlen($postD['title']) > 45 ? '...' : ''); ?></strong>
+                                        <?php if (!empty($postD['post_slug'])) { ?>
+                                            <div class="mt-1">
+                                                <small class="text-muted font-monospace"><i class="bx bx-link me-1"></i>/<?php echo htmlspecialchars($postD['post_slug']); ?></small>
+                                                <?php if (!empty($postD['slug_aliases'])) { ?>
+                                                    <span class="badge bg-label-info ms-1" title="Aliases: <?php echo htmlspecialchars($postD['slug_aliases']); ?>"><i class="bx bx-git-merge me-1"></i>Multi-Slug</span>
+                                                <?php } ?>
+                                            </div>
+                                        <?php } ?>
+                                    </td>
                                     <td>
                                         <span class="badge bg-label-info">
                                             <?php echo htmlspecialchars($postD['category_name'] ?? 'Uncategorized'); ?>

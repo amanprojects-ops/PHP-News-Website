@@ -27,6 +27,14 @@ $categoryData = ($query && mysqli_num_rows($query) > 0) ? mysqli_fetch_assoc($qu
                                     <input type="hidden" name="category_id" value="<?php echo htmlspecialchars($category_id); ?>">
                                 </div>
                                 <div class="mb-3">
+                                    <label class="form-label" for="category_slug">Category Slug (URL)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-light text-muted">/category/</span>
+                                        <input type="text" class="form-control" id="category_slug" name="category_slug" value="<?php echo htmlspecialchars($categoryData['category_slug'] ?? ''); ?>" placeholder="category-slug">
+                                    </div>
+                                    <div class="form-text small text-muted">Public URL: <code>/category/<?php echo htmlspecialchars($categoryData['category_slug'] ?? ''); ?></code></div>
+                                </div>
+                                <div class="mb-3">
                                     <label class="form-label" for="categoryTitle">Category Title / Description <span class="text-danger">*</span></label>
                                     <textarea id="categoryTitle" name="categoryTitle" class="form-control" rows="3" required><?php echo htmlspecialchars($categoryData['categoryTitle'] ?? ''); ?></textarea>
                                 </div>                                

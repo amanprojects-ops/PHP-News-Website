@@ -141,6 +141,9 @@ $categoryQuery = mysqli_query($conn, $selectCategory);?>
                                         <span class="badge bg-label-primary">
                                             <?php echo htmlspecialchars($categoryD['category_name'] ?? ''); ?>
                                         </span>
+                                        <?php if (!empty($categoryD['category_slug'])) { ?>
+                                            <div class="mt-1"><small class="text-muted font-monospace">/category/<?php echo htmlspecialchars($categoryD['category_slug']); ?></small></div>
+                                        <?php } ?>
                                     </td>
                                     <td>
                                         <?php echo htmlspecialchars(($categoryD['first_name'] ?? '') . " " . ($categoryD['last_name'] ?? '')); ?>

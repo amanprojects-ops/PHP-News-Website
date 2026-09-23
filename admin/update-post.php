@@ -36,6 +36,24 @@ include_once '_subHeader.php'; ?>
                                         <label class="form-label" for="postShortDesc">Post Short Description <span class="text-danger">*</span></label>
                                         <input type="text" class="form-control" id="postShortDesc" name="postShortDesc" value="<?php echo htmlspecialchars($postQuery['sort_details'] ?? ''); ?>" required>
                                     </div>
+
+                                    <!-- Primary Slug (URL) -->
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold" for="post_slug">Primary Slug (URL) <span class="text-danger">*</span></label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light text-muted">/post/</span>
+                                            <input type="text" class="form-control" id="post_slug" name="post_slug" value="<?php echo htmlspecialchars($postQuery['post_slug'] ?? ''); ?>" required>
+                                        </div>
+                                        <div class="form-text text-muted small">If you change this slug, the old slug will automatically be archived into your aliases list and 301-redirected so backlinks never break.</div>
+                                    </div>
+
+                                    <!-- Multi-Slug Aliases -->
+                                    <div class="mb-3">
+                                        <label class="form-label fw-semibold" for="slug_aliases">Alternative Slugs / Aliases <span class="badge bg-label-info ms-1">Multi-Slug</span></label>
+                                        <input type="text" class="form-control" id="slug_aliases" name="slug_aliases" value="<?php echo htmlspecialchars($postQuery['slug_aliases'] ?? ''); ?>" placeholder="e.g. old-slug-one, alternate-keyword-slug">
+                                        <div class="form-text text-muted small">Comma-separated alternative URLs. Anyone visiting these will seamlessly 301-redirect to the primary URL.</div>
+                                    </div>
+
                                     <div class="mb-3">
                                         <label for="postImg" class="form-label">Upload Post Image</label>
                                         <input class="form-control mb-3" id="postImg" type="file" name="newImage">
@@ -49,7 +67,7 @@ include_once '_subHeader.php'; ?>
                                         <label for="newCategory" class="form-label">Category <span class="text-danger">*</span></label>
                                         <select class="form-select" id="newCategory" name="newCategory" required>
                                             <?php
-                                            if ($categoryR && mysqli_num_rows($categoryR) > 0) {
+                                             if ($categoryR && mysqli_num_rows($categoryR) > 0) {
                                                 while ($categoryD = mysqli_fetch_assoc($categoryR)) {
                                                     $select = ($categoryD['category_id'] == $postQuery['category']) ? 'selected' : '';
                                                     echo "<option $select value='{$categoryD['category_id']}'>" . htmlspecialchars($categoryD['category_name']) . "</option>";
@@ -64,6 +82,27 @@ include_once '_subHeader.php'; ?>
                                     <div class="mb-3">
                                         <label class="form-label" for="description">Post Description <span class="text-danger">*</span></label>
                                         <textarea id="description" name="description" class="form-control summernote" required><?php echo htmlspecialchars($postQuery['description'] ?? ''); ?></textarea>
+                                    </div>
+
+                                    <!-- SEO Card -->
+                                    <div class="card mb-4 border border-secondary shadow-sm">
+                                        <div class="card-header bg-light py-2">
+                                            <h6 class="mb-0 fw-bold"><i class="bx bx-search-alt text-primary me-1"></i> SEO & Search Meta</h6>
+                                        </div>
+                                        <div class="card-body pt-3 pb-2">
+                                            <div class="mb-3">
+                                                <label class="form-label" for="meta_title">Meta Title</label>
+                                                <input type="text" class="form-control" id="meta_title" name="meta_title" value="<?php echo htmlspecialchars($postQuery['meta_title'] ?? ''); ?>">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label" for="meta_description">Meta Description</label>
+                                                <textarea class="form-control" id="meta_description" name="meta_description" rows="2"><?php echo htmlspecialchars($postQuery['meta_description'] ?? ''); ?></textarea>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label" for="meta_keywords">Meta Keywords</label>
+                                                <input type="text" class="form-control" id="meta_keywords" name="meta_keywords" value="<?php echo htmlspecialchars($postQuery['meta_keywords'] ?? ''); ?>">
+                                            </div>
+                                        </div>
                                     </div>
                                     <button type="submit" name="updatePost" class="btn btn-primary">
                                         <i class="bx bx-save me-1"></i> Update Post

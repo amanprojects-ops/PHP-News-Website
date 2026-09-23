@@ -20,6 +20,14 @@ include_once "_subHeader.php"; ?>
                                 <input type="text" class="form-control" id="categoryName" name="categoryName" placeholder="Enter Category Name (e.g. RESULTS, SPORTS)" required>
                             </div>
                             <div class="mb-3">
+                                <label class="form-label" for="category_slug">Category Slug (URL)</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light text-muted">/category/</span>
+                                    <input type="text" class="form-control" id="category_slug" name="category_slug" placeholder="category-slug">
+                                </div>
+                                <div class="form-text small text-muted">Leave blank to automatically generate from Category Name.</div>
+                            </div>
+                            <div class="mb-3">
                                 <label class="form-label" for="categoryTitle">Category Title / Description <span class="text-danger">*</span></label>
                                 <textarea id="categoryTitle" name="categoryTitle" class="form-control" rows="3" placeholder="Enter Category Title description." required></textarea>
                             </div>

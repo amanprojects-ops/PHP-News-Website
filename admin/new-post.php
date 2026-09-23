@@ -30,15 +30,22 @@ include_once '_subHeader.php'; ?>
 
                             <!-- Post Slug -->
                             <div class="mb-3">
-                                <label class="form-label fw-semibold" for="post_slug">Post Slug (URL) <span class="text-danger">*</span></label>
+                                <label class="form-label fw-semibold" for="post_slug">Primary Slug (URL) <span class="text-danger">*</span></label>
                                 <div class="input-group input-group-merge">
-                                    <span class="input-group-text bg-light text-muted">/news/</span>
+                                    <span class="input-group-text bg-light text-muted" id="url_cat_prefix">/post/</span>
                                     <input type="text" class="form-control" name="post_slug" id="post_slug" placeholder="post-url-slug" required>
                                     <button class="btn btn-outline-secondary" type="button" id="btn_regenerate_slug" title="Regenerate from Title">
                                         <i class="bx bx-refresh"></i>
                                     </button>
                                 </div>
-                                <div class="form-text">The slug is the user-friendly URL version of the title.</div>
+                                <div class="form-text">Primary canonical URL slug.</div>
+                            </div>
+
+                            <!-- Multiple Slug Aliases -->
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold" for="slug_aliases">Alternative Slugs / Aliases <span class="badge bg-label-info ms-1">Multi-Slug</span></label>
+                                <input type="text" class="form-control" name="slug_aliases" id="slug_aliases" placeholder="e.g. earn-money-guide, online-earning-tips">
+                                <div class="form-text">Comma-separated alternative URLs. Requests to any of these slugs will automatically 301-redirect to the primary URL with zero broken links.</div>
                             </div>
 
                             <!-- Short Description -->
@@ -119,7 +126,8 @@ include_once '_subHeader.php'; ?>
                                         <option value="" selected disabled>Select Category</option>
                                         <?php
                                         while ($categoryD = mysqli_fetch_assoc($categoryR)) {
-                                            echo "<option value='{$categoryD['category_id']}'>" . htmlspecialchars($categoryD['category_name']) . '</option>';
+                                            $cSlug = htmlspecialchars($categoryD['category_slug'] ?? 'category');
+                                            echo "<option value='{$categoryD['category_id']}' data-slug='{$cSlug}'>" . htmlspecialchars($categoryD['category_name']) . '</option>';
                                         }
                                         ?>
                                     </select>
@@ -250,6 +258,11 @@ include_once '_subHeader.php'; ?>
 
         $('#meta_title, #meta_description, #post_short_desc').on('input keyup change', function() {
             updateSeoPreview();
+        });
+
+        $('#post_category').on('change', function() {
+            var catSlug = $(this).find(':selected').data('slug') || 'category';
+            $('#url_cat_prefix').text('/' + catSlug + '/');
         });
 
         // Form Submit Validation

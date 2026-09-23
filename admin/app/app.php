@@ -166,18 +166,48 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $postCategory = mysqli_real_escape_string($conn, trim($_POST['newCategory']));
         $enCodeCategory = base64_encode(trim($_POST['newCategory']));
         $postTitle = mysqli_real_escape_string($conn, trim($_POST['post_title']));
-        
-        $postSlug = isset($_POST['post_slug']) && !empty(trim($_POST['post_slug'])) ? trim($_POST['post_slug']) : $postTitle;
-        $postSlug = mysqli_real_escape_string($conn, strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $postSlug))));
+
+        // Multi-Slug History & Aliases Management
+        $oldPostRes = mysqli_query($conn, "SELECT post_slug, slug_aliases FROM post WHERE post_id = '{$postId}'");
+        $oldPost = $oldPostRes ? mysqli_fetch_assoc($oldPostRes) : [];
+        $oldPrimarySlug = $oldPost['post_slug'] ?? '';
+        $currentAliases = $oldPost['slug_aliases'] ?? '';
+
+        $newPrimarySlug = slugify(!empty($_POST['post_slug']) ? $_POST['post_slug'] : $postTitle);
+        $enteredAliases = trim($_POST['slug_aliases'] ?? '');
+
+        $combinedAliases = [];
+        if (!empty($enteredAliases)) {
+            $combinedAliases = array_merge($combinedAliases, explode(',', $enteredAliases));
+        }
+        if (!empty($currentAliases)) {
+            $combinedAliases = array_merge($combinedAliases, explode(',', $currentAliases));
+        }
+        // Auto-archive old primary slug into aliases so backlinks never 404
+        if (!empty($oldPrimarySlug) && $oldPrimarySlug !== $newPrimarySlug) {
+            $combinedAliases[] = $oldPrimarySlug;
+        }
+
+        $uniqueAliases = [];
+        foreach ($combinedAliases as $al) {
+            $clean = slugify($al);
+            if (!empty($clean) && $clean !== $newPrimarySlug && !in_array($clean, $uniqueAliases)) {
+                $uniqueAliases[] = $clean;
+            }
+        }
+        $finalAliasesStr = implode(', ', $uniqueAliases);
+        $finalAliasesSafe = mysqli_real_escape_string($conn, $finalAliasesStr);
+        $postSlugSafe = mysqli_real_escape_string($conn, $newPrimarySlug);
 
         $metaTitle = mysqli_real_escape_string($conn, trim($_POST['meta_title'] ?? ''));
         $metaDescription = mysqli_real_escape_string($conn, trim($_POST['meta_description'] ?? ''));
         $metaKeywords = mysqli_real_escape_string($conn, trim($_POST['meta_keywords'] ?? ''));
 
-        $sql = "UPDATE `post` SET postStatus = 'W', `title` = '{$postTitle}', `post_slug` = '{$postSlug}', `sort_details` = '{$shortDescription}', `description` = '{$description}', `category` = {$postCategory}, `post_img` = '{$image_name}', `meta_title` = '{$metaTitle}', `meta_description` = '{$metaDescription}', `meta_keywords` = '{$metaKeywords}' WHERE `post_id` = '{$postId}'";
+        $sql = "UPDATE `post` SET postStatus = 'W', `title` = '{$postTitle}', `post_slug` = '{$postSlugSafe}', `slug_aliases` = '{$finalAliasesSafe}', `sort_details` = '{$shortDescription}', `description` = '{$description}', `category` = {$postCategory}, `post_img` = '{$image_name}', `meta_title` = '{$metaTitle}', `meta_description` = '{$metaDescription}', `meta_keywords` = '{$metaKeywords}' WHERE `post_id` = '{$postId}'";
 
         if (mysqli_query($conn, $sql)) {
-            setSession('success', 'Post updated successfully.');
+            syncPostSlugs($conn, $postId, $newPrimarySlug, $finalAliasesStr);
+            setSession('success', 'Post updated successfully with multi-slug sync.');
         } else {
             setSession('error', 'Failed to update post.');
         }
@@ -192,8 +222,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $author_id = mysqli_real_escape_string($conn, trim($_POST['author_id']));
         $date = date('d-m-Y');
 
-        $post_slug = isset($_POST['post_slug']) && !empty(trim($_POST['post_slug'])) ? trim($_POST['post_slug']) : $post_title;
-        $post_slug = mysqli_real_escape_string($conn, strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $post_slug))));
+        $clean_slug = slugify(!empty($_POST['post_slug']) ? $_POST['post_slug'] : $post_title);
+        $post_slug_safe = mysqli_real_escape_string($conn, $clean_slug);
+
+        $raw_aliases = trim($_POST['slug_aliases'] ?? '');
+        $parsedAliases = [];
+        if (!empty($raw_aliases)) {
+            foreach (explode(',', $raw_aliases) as $a) {
+                $c = slugify($a);
+                if (!empty($c) && $c !== $clean_slug && !in_array($c, $parsedAliases)) {
+                    $parsedAliases[] = $c;
+                }
+            }
+        }
+        $finalAliasesStr = implode(', ', $parsedAliases);
+        $finalAliasesSafe = mysqli_real_escape_string($conn, $finalAliasesStr);
 
         $meta_title = mysqli_real_escape_string($conn, trim($_POST['meta_title'] ?? ''));
         $meta_description = mysqli_real_escape_string($conn, trim($_POST['meta_description'] ?? ''));
@@ -208,13 +251,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $new_name = $uploadResult['success'];
             }
         } else {
-            $new_name = '';  // Consider handling if image is mandatory
+            $new_name = '';
         }
 
-        $addpQuery = "INSERT INTO `post`(`title`, `post_slug`, `sort_details`, `description`, `post_img`, `category`, `author`, `post_date`, `meta_title`, `meta_description`, `meta_keywords`) VALUES ('{$post_title}', '{$post_slug}', '{$post_details}', '{$description}', '{$new_name}', '{$post_category}', '{$author_id}', '{$date}', '{$meta_title}', '{$meta_description}', '{$meta_keywords}')";
+        $addpQuery = "INSERT INTO `post`(`title`, `post_slug`, `slug_aliases`, `sort_details`, `description`, `post_img`, `category`, `author`, `post_date`, `meta_title`, `meta_description`, `meta_keywords`) VALUES ('{$post_title}', '{$post_slug_safe}', '{$finalAliasesSafe}', '{$post_details}', '{$description}', '{$new_name}', '{$post_category}', '{$author_id}', '{$date}', '{$meta_title}', '{$meta_description}', '{$meta_keywords}')";
 
         if (mysqli_query($conn, $addpQuery)) {
-            setSession('success', 'New post saved successfully. <strong>Waiting for approval.</strong>');
+            $newPostId = mysqli_insert_id($conn);
+            syncPostSlugs($conn, $newPostId, $clean_slug, $finalAliasesStr);
+            setSession('success', 'New post saved successfully with clean multi-slug routing. <strong>Waiting for approval.</strong>');
         } else {
             setSession('error', 'Failed to save new post. <strong>Please try again.</strong>');
         }
@@ -235,8 +280,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Category Rajected Codes ================================================
     elseif (isset($_POST['categoryRajected'])) {
         $categoryid = mysqli_real_escape_string($conn, $_POST['categoryR']);
-        $checkC1Q = "SELECT * FROM post WHERE category = '{$categoryid}'";
-
+        $checkC1Q = "SELECT * FROM post WHERE category='{$categoryid}'";
         if (mysqli_num_rows(mysqli_query($conn, $checkC1Q)) > 0) {
             setSession('warning', 'This category cannot be rejected as it is currently in use.');
         } else {
@@ -255,7 +299,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $categoryTitle = mysqli_real_escape_string($conn, $_POST['categoryTitle']);
         $category_id = mysqli_real_escape_string($conn, $_POST['category_id']);
 
-        $update = "UPDATE category SET category_name='{$categoryName}',categoryTitle='{$categoryTitle}' WHERE category_id = '{$category_id}'";
+        $catSlugInput = trim($_POST['category_slug'] ?? '');
+        $catSlug = slugify(!empty($catSlugInput) ? $catSlugInput : $categoryName);
+        $catSlugSafe = mysqli_real_escape_string($conn, $catSlug);
+
+        $update = "UPDATE category SET category_name='{$categoryName}', category_slug='{$catSlugSafe}', categoryTitle='{$categoryTitle}' WHERE category_id = '{$category_id}'";
 
         if (mysqli_query($conn, $update)) {
             setSession('success', 'Category updated successfully.');
@@ -269,7 +317,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $categoryName = mysqli_real_escape_string($conn, $_POST['categoryName']);
         $categoryTitle = mysqli_real_escape_string($conn, $_POST['categoryTitle']);
 
-        $insert = "INSERT INTO category(category_name,categoryTitle,author)VALUES('{$categoryName}','{$categoryTitle}','{$_SESSION['author_id']}')";
+        $catSlugInput = trim($_POST['category_slug'] ?? '');
+        $catSlug = slugify(!empty($catSlugInput) ? $catSlugInput : $categoryName);
+        $catSlugSafe = mysqli_real_escape_string($conn, $catSlug);
+
+        $insert = "INSERT INTO category(category_name, category_slug, categoryTitle, author) VALUES ('{$categoryName}', '{$catSlugSafe}', '{$categoryTitle}', '{$_SESSION['author_id']}')";
 
         if (mysqli_query($conn, $insert)) {
             setSession('success', 'Category added successfully.');
