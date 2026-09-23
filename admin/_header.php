@@ -165,6 +165,16 @@ $url = $settingd['websiteUrl']; ?>
               <?php } ?>             
             </ul>
           </li>
+
+          <!-- Slug & URL Manager -->
+          <li class="menu-item <?php if (strpos($request_url, 'manage-slugs.php') !== false) {
+  echo 'active';
+} ?>">
+            <a href="manage-slugs.php" class="menu-link">
+              <i class="menu-icon tf-icons bx bx-link-external"></i>
+              <div data-i18n="Slug Manager" style="font-weight: 600; letter-spacing: 0.3px;">Slug Manager</div>
+            </a>
+          </li>
           
           <!-- Users Sections -->
           <?php if ($_SESSION['role'] == 1 || $_SESSION['role'] == 2 || $_SESSION['role'] == 3) { ?>
@@ -210,7 +220,7 @@ if ($_SESSION['author_id'] == 1 && $_SESSION['role'] == 1) {
           </li>
 
           <!-- Website Settings -->
-          <li class="menu-item <?php if ($request_url == 'manage-website.php' || $request_url == 'view-visitor.php') {
+          <li class="menu-item <?php if ($request_url == 'manage-website.php' || $request_url == 'view-visitor.php' || strpos($request_url, 'manage-slugs.php') !== false) {
     echo 'active open';
   } ?>">
             <a href="javascript:void(0)" class="menu-link menu-toggle">
@@ -223,6 +233,13 @@ if ($_SESSION['author_id'] == 1 && $_SESSION['role'] == 1) {
   } ?>">
                 <a href="manage-website.php" class="menu-link">
                   <div data-i18n="System Settings">System Settings</div>
+                </a>
+              </li>
+              <li class="menu-item <?php if (strpos($request_url, 'manage-slugs.php') !== false) {
+    echo 'active';
+  } ?>">
+                <a href="manage-slugs.php" class="menu-link">
+                  <div data-i18n="Slug Manager">Slug &amp; URL Manager</div>
                 </a>
               </li>
               <li class="menu-item <?php if ($request_url == 'view-visitor.php') {

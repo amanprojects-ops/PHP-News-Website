@@ -17,8 +17,7 @@
               </div>
             </div>
           </footer>
-          <!-- / Footer -->
-          <?php include_once ('./_message.php'); ?>
+          <?php include_once (__DIR__ . '/_message.php'); ?>
           <div class="content-backdrop fade"></div>
           </div>
           <!-- Content wrapper -->

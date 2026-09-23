@@ -645,6 +645,336 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         redirect('../manage-website.php?tab=branding');
     }
+    // Add Slug Alias (Multi-Slug Redirect) ========================================================
+    elseif (isset($_POST['add_slug_alias'])) {
+        $isAjax = !empty($_POST['is_ajax']);
+        $csrf = $_POST['csrf_token'] ?? '';
+        if (empty($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $csrf)) {
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode(['status' => 'error', 'message' => 'CSRF verification failed.']);
+                exit;
+            }
+            setSession('error', 'Security verification failed.');
+            redirect('../manage-slugs.php');
+        }
+
+        $postId = (int)($_POST['post_id'] ?? 0);
+        $aliasInput = trim($_POST['alias_slug'] ?? '');
+        $cleanAlias = slugify($aliasInput);
+
+        if ($postId <= 0 || empty($cleanAlias)) {
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode(['status' => 'error', 'message' => 'Invalid post ID or empty slug alias.']);
+                exit;
+            }
+            setSession('error', 'Please enter a valid alias slug.');
+            redirect('../manage-slugs.php?post_id=' . $postId);
+        }
+
+        $postRes = mysqli_query($conn, "SELECT post_id, author, post_slug, slug_aliases FROM post WHERE post_id = {$postId} LIMIT 1");
+        if (!$postRes || mysqli_num_rows($postRes) === 0) {
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode(['status' => 'error', 'message' => 'Post not found.']);
+                exit;
+            }
+            setSession('error', 'Post not found.');
+            redirect('../manage-slugs.php');
+        }
+        $postData = mysqli_fetch_assoc($postRes);
+
+        if ($_SESSION['role'] != 1 && $_SESSION['role'] != 2 && $postData['author'] != $_SESSION['author_id']) {
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode(['status' => 'error', 'message' => 'Unauthorized action.']);
+                exit;
+            }
+            setSession('error', 'Unauthorized access.');
+            redirect('../manage-slugs.php');
+        }
+
+        if ($cleanAlias === $postData['post_slug']) {
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode(['status' => 'error', 'message' => "Slug '$cleanAlias' is already the primary canonical URL for this post."]);
+                exit;
+            }
+            setSession('warning', "Slug '{$cleanAlias}' is already the primary canonical URL for this post.");
+            redirect('../manage-slugs.php?post_id=' . $postId);
+        }
+
+        $escapedAlias = mysqli_real_escape_string($conn, $cleanAlias);
+        $collisionRes = mysqli_query($conn, "SELECT post_id FROM post_slugs WHERE slug = '{$escapedAlias}' AND post_id != {$postId} LIMIT 1");
+        if ($collisionRes && mysqli_num_rows($collisionRes) > 0) {
+            $coll = mysqli_fetch_assoc($collisionRes);
+            $msg = "The slug '{$cleanAlias}' is already reserved for Post #{$coll['post_id']}. Please choose a unique slug.";
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode(['status' => 'error', 'message' => $msg]);
+                exit;
+            }
+            setSession('error', $msg);
+            redirect('../manage-slugs.php?post_id=' . $postId);
+        }
+
+        $currentAliases = [];
+        if (!empty($postData['slug_aliases'])) {
+            foreach (explode(',', $postData['slug_aliases']) as $a) {
+                $c = slugify($a);
+                if (!empty($c) && !in_array($c, $currentAliases)) {
+                    $currentAliases[] = $c;
+                }
+            }
+        }
+
+        if (!in_array($cleanAlias, $currentAliases)) {
+            $currentAliases[] = $cleanAlias;
+        }
+
+        $syncRes = syncPostSlugs($conn, $postId, $postData['post_slug'], $currentAliases);
+        if ($syncRes) {
+            $msg = "Alias redirect '/{$cleanAlias}' added successfully (301 redirect active).";
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode(['status' => 'success', 'message' => $msg, 'alias' => $cleanAlias, 'post_id' => $postId]);
+                exit;
+            }
+            setSession('success', $msg);
+        } else {
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode(['status' => 'error', 'message' => 'Failed to synchronize slug redirect index.']);
+                exit;
+            }
+            setSession('error', 'Failed to synchronize slug redirect index.');
+        }
+        redirect('../manage-slugs.php?post_id=' . $postId);
+    }
+    // Remove Slug Alias ==========================================================================
+    elseif (isset($_POST['remove_slug_alias'])) {
+        $isAjax = !empty($_POST['is_ajax']);
+        $csrf = $_POST['csrf_token'] ?? '';
+        if (empty($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $csrf)) {
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode(['status' => 'error', 'message' => 'CSRF verification failed.']);
+                exit;
+            }
+            setSession('error', 'Security verification failed.');
+            redirect('../manage-slugs.php');
+        }
+
+        $postId = (int)($_POST['post_id'] ?? 0);
+        $aliasInput = trim($_POST['alias_slug'] ?? '');
+        $cleanAlias = slugify($aliasInput);
+
+        if ($postId <= 0 || empty($cleanAlias)) {
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode(['status' => 'error', 'message' => 'Invalid post ID or alias.']);
+                exit;
+            }
+            setSession('error', 'Invalid post ID or alias.');
+            redirect('../manage-slugs.php?post_id=' . $postId);
+        }
+
+        $postRes = mysqli_query($conn, "SELECT post_id, author, post_slug, slug_aliases FROM post WHERE post_id = {$postId} LIMIT 1");
+        if (!$postRes || mysqli_num_rows($postRes) === 0) {
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode(['status' => 'error', 'message' => 'Post not found.']);
+                exit;
+            }
+            setSession('error', 'Post not found.');
+            redirect('../manage-slugs.php');
+        }
+        $postData = mysqli_fetch_assoc($postRes);
+
+        if ($_SESSION['role'] != 1 && $_SESSION['role'] != 2 && $postData['author'] != $_SESSION['author_id']) {
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode(['status' => 'error', 'message' => 'Unauthorized action.']);
+                exit;
+            }
+            setSession('error', 'Unauthorized access.');
+            redirect('../manage-slugs.php');
+        }
+
+        $currentAliases = [];
+        if (!empty($postData['slug_aliases'])) {
+            foreach (explode(',', $postData['slug_aliases']) as $a) {
+                $c = slugify($a);
+                if (!empty($c) && $c !== $cleanAlias && !in_array($c, $currentAliases)) {
+                    $currentAliases[] = $c;
+                }
+            }
+        }
+
+        syncPostSlugs($conn, $postId, $postData['post_slug'], $currentAliases);
+        $msg = "Alias redirect '/{$cleanAlias}' removed successfully.";
+        if ($isAjax) {
+            header('Content-Type: application/json');
+            echo json_encode(['status' => 'success', 'message' => $msg, 'alias' => $cleanAlias, 'post_id' => $postId]);
+            exit;
+        }
+        setSession('success', $msg);
+        redirect('../manage-slugs.php?post_id=' . $postId);
+    }
+    // Update Canonical Primary Slug ==============================================================
+    elseif (isset($_POST['update_primary_slug'])) {
+        $isAjax = !empty($_POST['is_ajax']);
+        $csrf = $_POST['csrf_token'] ?? '';
+        if (empty($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $csrf)) {
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode(['status' => 'error', 'message' => 'CSRF verification failed.']);
+                exit;
+            }
+            setSession('error', 'Security verification failed.');
+            redirect('../manage-slugs.php');
+        }
+
+        $postId = (int)($_POST['post_id'] ?? 0);
+        $newPrimaryInput = trim($_POST['primary_slug'] ?? '');
+        $cleanNewPrimary = slugify($newPrimaryInput);
+        $preserveOld = !empty($_POST['preserve_alias']);
+
+        if ($postId <= 0 || empty($cleanNewPrimary)) {
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode(['status' => 'error', 'message' => 'Primary slug cannot be empty.']);
+                exit;
+            }
+            setSession('error', 'Primary slug cannot be empty.');
+            redirect('../manage-slugs.php?post_id=' . $postId);
+        }
+
+        $postRes = mysqli_query($conn, "SELECT post_id, author, post_slug, slug_aliases FROM post WHERE post_id = {$postId} LIMIT 1");
+        if (!$postRes || mysqli_num_rows($postRes) === 0) {
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode(['status' => 'error', 'message' => 'Post not found.']);
+                exit;
+            }
+            setSession('error', 'Post not found.');
+            redirect('../manage-slugs.php');
+        }
+        $postData = mysqli_fetch_assoc($postRes);
+
+        if ($_SESSION['role'] != 1 && $_SESSION['role'] != 2 && $postData['author'] != $_SESSION['author_id']) {
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode(['status' => 'error', 'message' => 'Unauthorized action.']);
+                exit;
+            }
+            setSession('error', 'Unauthorized access.');
+            redirect('../manage-slugs.php');
+        }
+
+        $escapedNewPrimary = mysqli_real_escape_string($conn, $cleanNewPrimary);
+        $collisionRes = mysqli_query($conn, "SELECT post_id FROM post_slugs WHERE slug = '{$escapedNewPrimary}' AND post_id != {$postId} LIMIT 1");
+        if ($collisionRes && mysqli_num_rows($collisionRes) > 0) {
+            $coll = mysqli_fetch_assoc($collisionRes);
+            $msg = "Slug '{$cleanNewPrimary}' is already in use by Post #{$coll['post_id']}. Please choose a unique slug.";
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode(['status' => 'error', 'message' => $msg]);
+                exit;
+            }
+            setSession('error', $msg);
+            redirect('../manage-slugs.php?post_id=' . $postId);
+        }
+
+        $oldPrimary = $postData['post_slug'];
+        $currentAliases = [];
+        if (!empty($postData['slug_aliases'])) {
+            foreach (explode(',', $postData['slug_aliases']) as $a) {
+                $c = slugify($a);
+                if (!empty($c) && $c !== $cleanNewPrimary && !in_array($c, $currentAliases)) {
+                    $currentAliases[] = $c;
+                }
+            }
+        }
+
+        if ($preserveOld && !empty($oldPrimary) && $oldPrimary !== $cleanNewPrimary) {
+            if (!in_array($oldPrimary, $currentAliases)) {
+                $currentAliases[] = $oldPrimary;
+            }
+        }
+
+        syncPostSlugs($conn, $postId, $cleanNewPrimary, $currentAliases);
+        $msg = "Primary canonical slug updated to '/{$cleanNewPrimary}'." . ($preserveOld ? " Previous slug '/{$oldPrimary}' will now 301-redirect to it." : "");
+        if ($isAjax) {
+            header('Content-Type: application/json');
+            echo json_encode(['status' => 'success', 'message' => $msg, 'new_slug' => $cleanNewPrimary, 'post_id' => $postId]);
+            exit;
+        }
+        setSession('success', $msg);
+        redirect('../manage-slugs.php?post_id=' . $postId);
+    }
+    // Update Category Slug Direct ===============================================================
+    elseif (isset($_POST['update_category_slug_direct'])) {
+        $isAjax = !empty($_POST['is_ajax']);
+        $csrf = $_POST['csrf_token'] ?? '';
+        if (empty($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $csrf)) {
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode(['status' => 'error', 'message' => 'CSRF verification failed.']);
+                exit;
+            }
+            setSession('error', 'Security verification failed.');
+            redirect('../manage-slugs.php?tab=categories');
+        }
+
+        if ($_SESSION['role'] != 1 && $_SESSION['role'] != 2) {
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode(['status' => 'error', 'message' => 'Unauthorized action.']);
+                exit;
+            }
+            setSession('error', 'Unauthorized access.');
+            redirect('../manage-slugs.php?tab=categories');
+        }
+
+        $categoryId = (int)($_POST['category_id'] ?? 0);
+        $catSlugInput = trim($_POST['category_slug'] ?? '');
+        $cleanCatSlug = slugify($catSlugInput);
+
+        if ($categoryId <= 0 || empty($cleanCatSlug)) {
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode(['status' => 'error', 'message' => 'Category slug cannot be empty.']);
+                exit;
+            }
+            setSession('error', 'Category slug cannot be empty.');
+            redirect('../manage-slugs.php?tab=categories');
+        }
+
+        $escapedCatSlug = mysqli_real_escape_string($conn, $cleanCatSlug);
+        $collRes = mysqli_query($conn, "SELECT category_id FROM category WHERE category_slug = '{$escapedCatSlug}' AND category_id != {$categoryId} LIMIT 1");
+        if ($collRes && mysqli_num_rows($collRes) > 0) {
+            $msg = "Category slug '{$cleanCatSlug}' is already in use by another category.";
+            if ($isAjax) {
+                header('Content-Type: application/json');
+                echo json_encode(['status' => 'error', 'message' => $msg]);
+                exit;
+            }
+            setSession('error', $msg);
+            redirect('../manage-slugs.php?tab=categories');
+        }
+
+        mysqli_query($conn, "UPDATE category SET category_slug = '{$escapedCatSlug}' WHERE category_id = {$categoryId}");
+        $msg = "Category slug updated to '/category/{$cleanCatSlug}'.";
+        if ($isAjax) {
+            header('Content-Type: application/json');
+            echo json_encode(['status' => 'success', 'message' => $msg, 'category_id' => $categoryId, 'category_slug' => $cleanCatSlug]);
+            exit;
+        }
+        setSession('success', $msg);
+        redirect('../manage-slugs.php?tab=categories');
+    }
     // Change Password Code =======================================================================
     elseif (isset($_POST['changeUserPassword'])) {
         $username = mysqli_real_escape_string($conn, trim($_POST['username']));

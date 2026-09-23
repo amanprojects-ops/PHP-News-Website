@@ -245,9 +245,13 @@ $categoryR = mysqli_query($conn, $categoryQ);
                                                 <?php if ($_SESSION['role'] == 1 || $_SESSION['role'] == 2) { ?>
                                                     <a class="dropdown-item"
                                                         href="update-post.php?postid=<?php echo base64_encode($postD['post_id']); ?>"><i class="bx bx-edit me-1"></i> Update Post</a>
+                                                    <a class="dropdown-item"
+                                                        href="manage-slugs.php?post_id=<?php echo $postD['post_id']; ?>"><i class="bx bx-link-external me-1"></i> Manage Slugs</a>
                                                 <?php } elseif ($postD['postStatus'] == 'N') { ?>
                                                     <a class="dropdown-item"
                                                         href="update-post.php?postid=<?php echo base64_encode($postD['post_id']); ?>"><i class="bx bx-edit me-1"></i> Update Post</a>
+                                                    <a class="dropdown-item"
+                                                        href="manage-slugs.php?post_id=<?php echo $postD['post_id']; ?>"><i class="bx bx-link-external me-1"></i> Manage Slugs</a>
                                                 <?php }
                                                 if ($_SESSION['role'] == 1) { ?>
                                                     <a class="dropdown-item delete-record text-danger"
