@@ -129,6 +129,113 @@ if (!function_exists('ensureSettingsSchema')) {
             $_SESSION['settings_schema_verified'] = true;
         }
 
+        // Also ensure slug schema
+        ensureSlugSchema($conn);
+
         return true;
     }
 }
+
+if (!function_exists('ensureSlugSchema')) {
+    function ensureSlugSchema($conn) {
+        if (!$conn) {
+            return false;
+        }
+
+        // 1. Ensure category_slug in category table
+        $catCols = [];
+        $res = mysqli_query($conn, "SHOW COLUMNS FROM `category`");
+        if ($res) {
+            while ($row = mysqli_fetch_assoc($res)) {
+                $catCols[strtolower($row['Field'])] = true;
+            }
+        }
+
+        if (!isset($catCols['category_slug'])) {
+            mysqli_query($conn, "ALTER TABLE `category` ADD COLUMN `category_slug` VARCHAR(150) DEFAULT NULL AFTER `category_name`");
+        }
+
+        // Populate empty category slugs
+        $emptyCat = mysqli_query($conn, "SELECT category_id, category_name, category_slug FROM `category` WHERE `category_slug` IS NULL OR `category_slug` = ''");
+        if ($emptyCat) {
+            while ($cat = mysqli_fetch_assoc($emptyCat)) {
+                $rawSlug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $cat['category_name']), '-'));
+                if (empty($rawSlug)) {
+                    $rawSlug = 'cat-' . $cat['category_id'];
+                }
+                $slug = $rawSlug;
+                $counter = 1;
+                while (true) {
+                    $check = mysqli_query($conn, "SELECT category_id FROM `category` WHERE `category_slug` = '{$slug}' AND `category_id` != {$cat['category_id']}");
+                    if ($check && mysqli_num_rows($check) > 0) {
+                        $slug = $rawSlug . '-' . $counter++;
+                    } else {
+                        break;
+                    }
+                }
+                $slugSafe = mysqli_real_escape_string($conn, $slug);
+                mysqli_query($conn, "UPDATE `category` SET `category_slug` = '{$slugSafe}' WHERE `category_id` = {$cat['category_id']}");
+            }
+        }
+
+        // 2. Ensure slug_aliases in post table
+        $postCols = [];
+        $pres = mysqli_query($conn, "SHOW COLUMNS FROM `post`");
+        if ($pres) {
+            while ($prow = mysqli_fetch_assoc($pres)) {
+                $postCols[strtolower($prow['Field'])] = true;
+            }
+        }
+
+        if (!isset($postCols['slug_aliases'])) {
+            mysqli_query($conn, "ALTER TABLE `post` ADD COLUMN `slug_aliases` TEXT DEFAULT NULL AFTER `post_slug`");
+        }
+
+        // 3. Ensure post_slugs index table
+        $createSlugsTable = "CREATE TABLE IF NOT EXISTS `post_slugs` (
+            `id` int(11) NOT NULL AUTO_INCREMENT,
+            `post_id` int(11) NOT NULL,
+            `slug` varchar(255) NOT NULL,
+            `is_primary` tinyint(1) NOT NULL DEFAULT 0,
+            `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (`id`),
+            UNIQUE KEY `unique_slug` (`slug`),
+            KEY `post_id_idx` (`post_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;";
+        mysqli_query($conn, $createSlugsTable);
+
+        // 4. Backfill primary slugs and aliases from post into post_slugs
+        $postsWithoutSlugs = mysqli_query($conn, "SELECT post_id, title, post_slug, slug_aliases FROM `post`");
+        if ($postsWithoutSlugs) {
+            while ($p = mysqli_fetch_assoc($postsWithoutSlugs)) {
+                $postId = (int)$p['post_id'];
+                $primarySlug = trim($p['post_slug'] ?? '');
+
+                if (empty($primarySlug)) {
+                    $raw = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $p['title'] ?? ''), '-'));
+                    $primarySlug = !empty($raw) ? $raw : 'post-' . $postId;
+                    $psSafe = mysqli_real_escape_string($conn, $primarySlug);
+                    mysqli_query($conn, "UPDATE `post` SET `post_slug` = '{$psSafe}' WHERE `post_id` = {$postId}");
+                }
+
+                $psSafe = mysqli_real_escape_string($conn, $primarySlug);
+                mysqli_query($conn, "INSERT IGNORE INTO `post_slugs` (`post_id`, `slug`, `is_primary`) VALUES ({$postId}, '{$psSafe}', 1)");
+
+                // Sync aliases if present
+                if (!empty($p['slug_aliases'])) {
+                    $aliases = array_filter(array_map('trim', explode(',', $p['slug_aliases'])));
+                    foreach ($aliases as $al) {
+                        $alClean = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $al), '-'));
+                        if (!empty($alClean) && $alClean !== $primarySlug) {
+                            $alSafe = mysqli_real_escape_string($conn, $alClean);
+                            mysqli_query($conn, "INSERT IGNORE INTO `post_slugs` (`post_id`, `slug`, `is_primary`) VALUES ({$postId}, '{$alSafe}', 0)");
+                        }
+                    }
+                }
+            }
+        }
+
+        return true;
+    }
+}
+

@@ -1,6 +1,7 @@
 CREATE TABLE `category` (
   `category_id` int(11) NOT NULL,
   `category_name` varchar(100) DEFAULT NULL,
+  `category_slug` varchar(150) DEFAULT NULL,
   `categoryTitle` varchar(225) DEFAULT NULL,
   `categoryStatus` varchar(10) NOT NULL DEFAULT 'W',
   `author` int(11) DEFAULT NULL,
@@ -11,13 +12,13 @@ CREATE TABLE `category` (
 -- Dumping data for table `category`
 --
 
-INSERT INTO `category` (`category_id`, `category_name`, `categoryTitle`, `categoryStatus`, `author`, `categoryDate`) VALUES
-(1, 'RESULTS', 'All Types Exam Result, Exam Result Marksheet Download Linked, All Types Results Exam Notification', 'Y', 2, '2023-06-14 14:36:23'),
-(2, 'Latest Update', 'Latest Jobs & Vacancy Update, Job Application Form, Job Application Notification and News posts', 'Y', 1, '2023-06-14 17:20:21'),
-(3, 'ADMIT CARDS', 'Students Admit Card Or Hall Tickets Or Admit Card Notification.', 'Y', 5, '2023-06-14 17:24:52'),
-(4, 'Admission Form', 'Admission Form Update', 'Y', 5, '2023-06-14 17:26:43'),
-(5, 'Latest News', 'Latest News', 'Y', 2, '2023-10-26 11:44:53'),
-(6, 'NEWS ARTICLES', 'Food News, Latest News, Viral News, Current News,etc', 'Y', 6, '2023-11-03 17:37:54');
+INSERT INTO `category` (`category_id`, `category_name`, `category_slug`, `categoryTitle`, `categoryStatus`, `author`, `categoryDate`) VALUES
+(1, 'RESULTS', 'results', 'All Types Exam Result, Exam Result Marksheet Download Linked, All Types Results Exam Notification', 'Y', 2, '2023-06-14 14:36:23'),
+(2, 'Latest Update', 'latest-update', 'Latest Jobs & Vacancy Update, Job Application Form, Job Application Notification and News posts', 'Y', 1, '2023-06-14 17:20:21'),
+(3, 'ADMIT CARDS', 'admit-cards', 'Students Admit Card Or Hall Tickets Or Admit Card Notification.', 'Y', 5, '2023-06-14 17:24:52'),
+(4, 'Admission Form', 'admission-form', 'Admission Form Update', 'Y', 5, '2023-06-14 17:26:43'),
+(5, 'Latest News', 'latest-news', 'Latest News', 'Y', 2, '2023-10-26 11:44:53'),
+(6, 'NEWS ARTICLES', 'news-articles', 'Food News, Latest News, Viral News, Current News,etc', 'Y', 6, '2023-11-03 17:37:54');
 
 -- --------------------------------------------------------
 
@@ -44,6 +45,7 @@ CREATE TABLE `post` (
   `post_id` int(11) NOT NULL,
   `title` varchar(1500) DEFAULT NULL,
   `post_slug` varchar(255) DEFAULT NULL,
+  `slug_aliases` text DEFAULT NULL,
   `sort_details` varchar(250) DEFAULT NULL,
   `description` text DEFAULT NULL,
   `post_img` varchar(225) DEFAULT NULL,
@@ -55,6 +57,26 @@ CREATE TABLE `post` (
   `meta_description` text DEFAULT NULL,
   `meta_keywords` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `post_slugs`
+--
+
+CREATE TABLE `post_slugs` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `post_id` int(11) NOT NULL,
+  `slug` varchar(255) NOT NULL,
+  `is_primary` tinyint(1) NOT NULL DEFAULT 0,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `unique_slug` (`slug`),
+  KEY `post_id_idx` (`post_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
 --
 -- Table structure for table `settings`
 --
