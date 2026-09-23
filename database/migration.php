@@ -121,7 +121,7 @@ if (!function_exists('ensureSettingsSchema')) {
         if ($checkRow) {
             $count = mysqli_fetch_assoc($checkRow)['cnt'] ?? 0;
             if ($count == 0) {
-                mysqli_query($conn, "INSERT INTO `settings` (`websitename`, `websiteUrl`, `mailDriver`, `robotsIndex`) VALUES ('News Portal', 'http://127.0.0.1/PHP-News-Website', 'mail', 'index, follow')");
+                mysqli_query($conn, "INSERT INTO `settings` (`websitename`, `websiteUrl`, `mailDriver`, `robotsIndex`, `websiteTitle`, `workEmail`, `footerdesc`) VALUES ('Earn Bro', 'https://earnbro.site', 'mail', 'index, follow', 'Earn Bro - Online Earning, Blogging & Technology Tips', 'contact@earnbro.site', 'Earn Bro © 2026. All Rights Reserved. earnbro.site')");
             }
         }
 
