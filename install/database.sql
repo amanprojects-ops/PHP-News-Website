@@ -62,21 +62,46 @@ CREATE TABLE `post` (
 CREATE TABLE `settings` (
   `websitename` varchar(60) DEFAULT NULL,
   `favicon` varchar(255) DEFAULT NULL,
-  `logo` varchar(50) DEFAULT NULL,
+  `logo` varchar(255) DEFAULT NULL,
   `footerdesc` varchar(255) DEFAULT NULL,
-  `keywords` varchar(1000) DEFAULT NULL,
-  `watterMark` varchar(191) DEFAULT NULL,
+  `keywords` text DEFAULT NULL,
+  `watterMark` varchar(255) DEFAULT NULL,
   `workEmail` varchar(191) DEFAULT NULL,
   `websiteTitle` varchar(225) DEFAULT NULL,
-  `websiteUrl` varchar(999) NOT NULL
+  `websiteUrl` varchar(999) NOT NULL,
+  `contactPhone` varchar(50) DEFAULT NULL,
+  `contactAddress` text DEFAULT NULL,
+  `metaDescription` text DEFAULT NULL,
+  `metaAuthor` varchar(100) DEFAULT NULL,
+  `robotsIndex` varchar(50) NOT NULL DEFAULT 'index, follow',
+  `socialFacebook` varchar(255) DEFAULT NULL,
+  `socialTwitter` varchar(255) DEFAULT NULL,
+  `socialInstagram` varchar(255) DEFAULT NULL,
+  `socialLinkedin` varchar(255) DEFAULT NULL,
+  `socialYoutube` varchar(255) DEFAULT NULL,
+  `socialWhatsapp` varchar(255) DEFAULT NULL,
+  `googleAnalytics` text DEFAULT NULL,
+  `googleAdsense` varchar(100) DEFAULT NULL,
+  `customHeadCode` text DEFAULT NULL,
+  `customFooterCode` text DEFAULT NULL,
+  `maintenanceMode` tinyint(1) NOT NULL DEFAULT 0,
+  `maintenanceMsg` text DEFAULT NULL,
+  `mailDriver` varchar(20) NOT NULL DEFAULT 'mail',
+  `smtpHost` varchar(191) DEFAULT NULL,
+  `smtpPort` int(5) NOT NULL DEFAULT 587,
+  `smtpUser` varchar(191) DEFAULT NULL,
+  `smtpPass` text DEFAULT NULL,
+  `smtpEncryption` varchar(10) NOT NULL DEFAULT 'tls',
+  `smtpFromEmail` varchar(191) DEFAULT NULL,
+  `smtpFromName` varchar(191) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `settings`
 --
 
-INSERT INTO `settings` (`websitename`, `favicon`, `logo`, `footerdesc`, `keywords`, `watterMark`, `workEmail`, `websiteTitle`, `websiteUrl`) VALUES
-('ConnectBihar', '1682677942-slogo.png', 'logo.png', 'ConnectBihar.in', 'Sarkari Result, Connect Bihar: ConnectBihar.in provides latest Sarkari Result Jobs, Online Form, Sarkari Naukri Result in Sarkari Result 2023 various sectors such as Railway, Bank, SSC, Navy, Police, UPPSC, UPSSSC, UPTET, UP Scholarship ,\r\nConnect Bihar.in बिहार की सभी भर्ती की जानकारी देता है | Bihar Job Portal, Vacancy, Bihar Job Alert, Bihar Govt Job, Bihar Career Portal,\r\nBihar Govt Jobs Notifications 2023 apply at connectbihar.in Bihar Government Jobs here for all qualifications like 10th, 12th, technical and Any Degree etc. and latest Job updates are listed here', '1682677972-watter_mark.png', 'websiteowner@connectbihar.in', NULL, 'https://connectbihar.in');
+INSERT INTO `settings` (`websitename`, `favicon`, `logo`, `footerdesc`, `keywords`, `watterMark`, `workEmail`, `websiteTitle`, `websiteUrl`, `contactPhone`, `contactAddress`, `metaDescription`, `metaAuthor`, `robotsIndex`, `socialFacebook`, `socialTwitter`, `socialInstagram`, `socialLinkedin`, `socialYoutube`, `socialWhatsapp`, `googleAnalytics`, `googleAdsense`, `customHeadCode`, `customFooterCode`, `maintenanceMode`, `maintenanceMsg`, `mailDriver`, `smtpHost`, `smtpPort`, `smtpUser`, `smtpPass`, `smtpEncryption`, `smtpFromEmail`, `smtpFromName`) VALUES
+('News Portal', '1682677942-slogo.png', 'logo.png', 'News Portal © All Rights Reserved', 'News, Latest Updates, Breaking News', '1682677972-watter_mark.png', 'admin@example.com', 'Latest News & Updates Portal', 'http://127.0.0.1/PHP-News-Website', '+91 9876543210', 'New Delhi, India', 'Stay updated with the latest breaking news and articles.', 'Editorial Team', 'index, follow', '', '', '', '', '', '', '', '', '', '', 0, 'We are currently performing scheduled maintenance. Please check back shortly.', 'mail', 'smtp.gmail.com', 587, '', '', 'tls', '', 'News Portal');
 
 -- --------------------------------------------------------
 
