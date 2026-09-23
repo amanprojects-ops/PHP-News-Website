@@ -136,6 +136,9 @@ $footer_desc = $settings['footerdesc'] ?? '';
       </div>
     </div>
   </div>
-</div>
+<?php if (!empty($settings['customFooterCode'])): ?>
+  <!-- Custom Footer Scripts -->
+  <?php echo $settings['customFooterCode']; ?>
+<?php endif; ?>
 </body>
 </html>

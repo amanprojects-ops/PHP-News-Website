@@ -16,6 +16,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_contact'])) {
       if (mysqli_query($conn, $sql)) {
         $alert_msg = "Thank you! Your message has been sent successfully to our editorial team.";
         $alert_type = "success";
+
+        // Dispatch background notification to admin using SystemMailer
+        if (file_exists(__DIR__ . '/database/Mailer.php')) {
+            include_once __DIR__ . '/database/Mailer.php';
+            $adminEmail = $settings['workEmail'] ?? '';
+            if (!empty($adminEmail)) {
+                $mailSub = "New Contact Inquiry from " . htmlspecialchars($name);
+                $mailHtml = "<p>You have received a new contact inquiry from your website reader:</p>"
+                          . "<ul>"
+                          . "<li><strong>Sender Name:</strong> " . htmlspecialchars($name) . "</li>"
+                          . "<li><strong>Sender Email:</strong> " . htmlspecialchars($email) . "</li>"
+                          . "<li><strong>Subject:</strong> " . htmlspecialchars($subject) . "</li>"
+                          . "</ul>"
+                          . "<p><strong>Message:</strong><br>" . nl2br(htmlspecialchars($message)) . "</p>";
+                @sendSystemMail($conn, $adminEmail, $mailSub, $mailHtml, "Contact Form Desk");
+            }
+        }
       } else {
         $alert_msg = "Database Error: Could not store your message. Please try again later.";
         $alert_type = "danger";
@@ -32,6 +49,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['submit_contact'])) {
 
 $site_email = htmlspecialchars($settings['workEmail'] ?? 'editorial@newswebsite.com');
 $site_name = htmlspecialchars($settings['websitename'] ?? 'Our News Portal');
+$site_phone = htmlspecialchars($settings['contactPhone'] ?? '+91 9876543210');
+$site_address = !empty($settings['contactAddress']) ? htmlspecialchars($settings['contactAddress']) : "Media Center & Newsroom,<br>{$site_name} Desk";
 ?>
 
 <main class="py-5 bg-light">
@@ -92,22 +111,25 @@ $site_name = htmlspecialchars($settings['websitename'] ?? 'Our News Portal');
             <div>
               <h6 class="fw-bold text-dark mb-1">Editorial Headquarters</h6>
               <p class="text-muted small mb-0">
-                Media Center &amp; Newsroom,<br><?php echo $site_name; ?> Desk
+                <?php echo $site_address; ?>
               </p>
             </div>
           </div>
         </div>
 
-        <!-- Working Hours Card -->
+        <!-- Phone / Contact Desk Card -->
         <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white hover-card">
           <div class="d-flex align-items-center gap-3">
             <div class="rounded-circle bg-warning text-white d-flex align-items-center justify-content-center flex-shrink-0" style="width: 50px; height: 50px; font-size: 1.25rem;">
-              <i class="fa fa-clock-o"></i>
+              <i class="fa fa-phone"></i>
             </div>
             <div>
-              <h6 class="fw-bold text-dark mb-1">Operating Hours</h6>
+              <h6 class="fw-bold text-dark mb-1">Telephone &amp; Desk</h6>
               <p class="text-muted small mb-0">
-                Monday - Saturday: 8:00 AM - 9:00 PM<br>24/7 Breaking News Desk
+                <a href="tel:<?php echo preg_replace('/[^0-9+]/', '', $site_phone); ?>" class="text-decoration-none text-dark fw-semibold">
+                  <?php echo $site_phone; ?>
+                </a>
+                <br><span class="text-muted" style="font-size: 11px;">Mon - Sat: 8:00 AM - 9:00 PM</span>
               </p>
             </div>
           </div>

@@ -9,12 +9,23 @@ if (empty($baseurl)) {
 $settings_query = mysqli_query($conn, 'SELECT * FROM settings');
 $settings = mysqli_fetch_assoc($settings_query) ?: [];
 
+// Check Maintenance Mode
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+$isSiteAdmin = isset($_SESSION['username']) && isset($_SESSION['role']) && (int) $_SESSION['role'] === 1;
+if (!empty($settings['maintenanceMode']) && (int) $settings['maintenanceMode'] === 1 && !$isSiteAdmin) {
+    include_once __DIR__ . '/maintenance.php';
+    exit;
+}
+
 $page = basename($_SERVER['PHP_SELF']);
 $auth = basename($_SERVER['SCRIPT_NAME']);
 
 // Initialize default variables for meta tags to prevent undefined variable notices
 $page_title = '';
 $page_description = '';
+$page_author = '';
 $post_img = '';
 $post_share = '';
 
@@ -27,7 +38,7 @@ switch ($page) {
       if ($result_title && $row_title = mysqli_fetch_assoc($result_title)) {
         $post_share = $page . '?id=' . urlencode($_GET['id']);
         $post_img = $row_title['post_img'] ?? '';
-        $page_description = $row_title['title'] ?? '';
+        $page_description = $row_title['meta_description'] ?: ($row_title['title'] ?? '');
         $page_title = $row_title['title'] ?? '';
       }
     } else {
@@ -59,6 +70,7 @@ switch ($page) {
         $first_name = $row_title['first_name'] ?? '';
         $last_name = $row_title['last_name'] ?? '';
         $page_title = 'News By ' . trim($first_name . ' ' . $last_name);
+        $page_author = trim($first_name . ' ' . $last_name);
       }
     } else {
       $page_title = 'No Post Found | ' . ($settings['websitename'] ?? '');
@@ -74,7 +86,7 @@ switch ($page) {
     break;
 
   default:
-    $page_title = $settings['websitename'] ?? '';
+    $page_title = !empty($settings['websiteTitle']) ? $settings['websiteTitle'] : ($settings['websitename'] ?? 'News Portal');
     break;
 }
 ?>
@@ -88,20 +100,39 @@ switch ($page) {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   
-  <title><?php echo htmlspecialchars($page_title); ?></title>
+  <title><?php echo htmlspecialchars($page_title . (($page !== 'index.php' && $page !== '') ? ' | ' . ($settings['websitename'] ?? '') : '')); ?></title>
 
   <!-- SEO Meta Tags -->
-  <meta name="description" content="<?php echo htmlspecialchars($page_description ?: $page_title); ?>">
+  <meta name="description" content="<?php echo htmlspecialchars($page_description ?: ($settings['metaDescription'] ?? $page_title)); ?>">
   <meta name="keywords" content="<?php echo htmlspecialchars($settings['keywords'] ?? ''); ?>">
-  <?php if ($auth === 'author.php'): ?>
-    <meta name="author" content="<?php echo htmlspecialchars($page_title); ?>">
-  <?php endif; ?>
-  <meta name="robots" content="index, follow">
+  <meta name="author" content="<?php echo htmlspecialchars(!empty($page_author) ? $page_author : ($settings['metaAuthor'] ?? 'Editorial Team')); ?>">
+  <meta name="robots" content="<?php echo htmlspecialchars($settings['robotsIndex'] ?? 'index, follow'); ?>">
   <meta name="rating" content="general">
   <meta name="distribution" content="global">
   <meta http-equiv="content-language" content="en">
   <meta http-equiv="Permissions-Policy" content="interest-cohort=()">
-  <meta name="google-adsense-account" content="ca-pub-8896362105504152">
+
+  <?php if (!empty($settings['googleAdsense'])): ?>
+    <!-- Google AdSense -->
+    <meta name="google-adsense-account" content="<?php echo htmlspecialchars($settings['googleAdsense']); ?>">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=<?php echo htmlspecialchars($settings['googleAdsense']); ?>" crossorigin="anonymous"></script>
+  <?php endif; ?>
+
+  <?php if (!empty($settings['googleAnalytics'])): ?>
+    <!-- Google Analytics (GA4) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=<?php echo htmlspecialchars($settings['googleAnalytics']); ?>"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', '<?php echo htmlspecialchars($settings['googleAnalytics']); ?>');
+    </script>
+  <?php endif; ?>
+
+  <?php if (!empty($settings['customHeadCode'])): ?>
+    <!-- Custom Head Scripts / Meta -->
+    <?php echo $settings['customHeadCode']; ?>
+  <?php endif; ?>
 
   <!-- Canonical URL -->
   <link rel="canonical" href="<?php echo htmlspecialchars(($page === 'single.php') ? ($settings['websiteUrl'] . '/' . $post_share) : $settings['websiteUrl']); ?>">
@@ -110,7 +141,7 @@ switch ($page) {
   <meta property="og:type" content="website">
   <meta property="og:url" content="<?php echo htmlspecialchars($settings['websiteUrl'] ?? ''); ?>">
   <meta property="og:title" content="<?php echo htmlspecialchars($page_title); ?>">
-  <meta property="og:description" content="<?php echo htmlspecialchars(($page === 'single.php') ? $page_description : ($settings['websiteTitle'] ?? '')); ?>">
+  <meta property="og:description" content="<?php echo htmlspecialchars(($page === 'single.php') ? $page_description : ($settings['websiteTitle'] ?? ($settings['metaDescription'] ?? ''))); ?>">
   <meta property="og:image" content="<?php echo htmlspecialchars(($page === 'single.php') ? ($settings['websiteUrl'] . '/assets/postImage/' . $post_img) : ($settings['websiteUrl'] . '/assets/images/' . $settings['logo'])); ?>">
 
   <!-- Twitter -->
@@ -501,6 +532,14 @@ switch ($page) {
   $latest_post = $latest_post_query ? mysqli_fetch_assoc($latest_post_query) : null;
   ?>
 
+  <?php if ($isSiteAdmin && !empty($settings['maintenanceMode']) && (int)$settings['maintenanceMode'] === 1): ?>
+    <!-- ADMIN ALERT: Maintenance Mode Active -->
+    <div class="alert alert-warning mb-0 py-2 text-center rounded-0 fw-semibold shadow-sm" style="position: sticky; top: 0; z-index: 99999; border-bottom: 2px solid #f59e0b; background-color: #fffbeb; color: #92400e;">
+      <i class="fa fa-exclamation-triangle me-1"></i> <strong>Maintenance Mode is Active:</strong> Public visitors will see the maintenance landing page.
+      <a href="admin/manage-website.php?tab=general" class="btn btn-dark btn-sm ms-3 py-0 px-2 fw-normal" style="font-size: 11px;">Settings &rarr;</a>
+    </div>
+  <?php endif; ?>
+
   <!-- MODERN TOP BAR -->
   <div class="top-bar">
     <div class="container">
@@ -521,10 +560,30 @@ switch ($page) {
         </div>
         <div class="top-bar-right">
           <div class="top-bar-social">
-            <a href="#"><i class="fa fa-facebook"></i></a>
-            <a href="#"><i class="fa fa-twitter"></i></a>
-            <a href="#"><i class="fa fa-instagram"></i></a>
-            <a href="#"><i class="fa fa-linkedin"></i></a>
+            <?php if (!empty($settings['socialFacebook'])): ?>
+              <a href="<?php echo htmlspecialchars($settings['socialFacebook']); ?>" target="_blank" rel="noopener noreferrer" title="Facebook"><i class="fa fa-facebook"></i></a>
+            <?php endif; ?>
+            <?php if (!empty($settings['socialTwitter'])): ?>
+              <a href="<?php echo htmlspecialchars($settings['socialTwitter']); ?>" target="_blank" rel="noopener noreferrer" title="Twitter / X"><i class="fa fa-twitter"></i></a>
+            <?php endif; ?>
+            <?php if (!empty($settings['socialInstagram'])): ?>
+              <a href="<?php echo htmlspecialchars($settings['socialInstagram']); ?>" target="_blank" rel="noopener noreferrer" title="Instagram"><i class="fa fa-instagram"></i></a>
+            <?php endif; ?>
+            <?php if (!empty($settings['socialLinkedin'])): ?>
+              <a href="<?php echo htmlspecialchars($settings['socialLinkedin']); ?>" target="_blank" rel="noopener noreferrer" title="LinkedIn"><i class="fa fa-linkedin"></i></a>
+            <?php endif; ?>
+            <?php if (!empty($settings['socialYoutube'])): ?>
+              <a href="<?php echo htmlspecialchars($settings['socialYoutube']); ?>" target="_blank" rel="noopener noreferrer" title="YouTube"><i class="fa fa-youtube-play"></i></a>
+            <?php endif; ?>
+            <?php if (!empty($settings['socialWhatsapp'])): ?>
+              <a href="<?php echo htmlspecialchars($settings['socialWhatsapp']); ?>" target="_blank" rel="noopener noreferrer" title="WhatsApp"><i class="fa fa-whatsapp"></i></a>
+            <?php endif; ?>
+            <?php if (empty($settings['socialFacebook']) && empty($settings['socialTwitter']) && empty($settings['socialInstagram']) && empty($settings['socialLinkedin'])): ?>
+              <a href="#"><i class="fa fa-facebook"></i></a>
+              <a href="#"><i class="fa fa-twitter"></i></a>
+              <a href="#"><i class="fa fa-instagram"></i></a>
+              <a href="#"><i class="fa fa-linkedin"></i></a>
+            <?php endif; ?>
           </div>
         </div>
       </div>
