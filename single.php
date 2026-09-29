@@ -94,7 +94,7 @@
                                             echo '<h5 class="fw-bold mb-3"><i class="fa fa-tags text-primary me-2"></i>Tags</h5>';
                                             echo '<div class="d-flex flex-wrap gap-2">';
                                             foreach ($tags as $tag) {
-                                                $tagLink = $baseurl . '/search.php?search=' . urlencode($tag);
+                                                $tagLink = getTagUrl($tag, $baseurl);
                                                 echo '<a href="' . $tagLink . '" class="badge bg-light text-secondary text-decoration-none px-3 py-2 rounded-pill border hover-pill" style="transition: all 0.3s ease;">#' . htmlspecialchars($tag) . '</a>';
                                             }
                                             echo '</div>';

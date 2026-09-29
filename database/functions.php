@@ -235,4 +235,19 @@ if (!function_exists('syncPostSlugs')) {
         return true;
     }
 }
+// Generate clean tag URL: /tag/{tag-slug}
+if (!function_exists('getTagUrl')) {
+    function getTagUrl($tag, $baseUrl = '')
+    {
+        $base = !empty($baseUrl) ? rtrim($baseUrl, '/') : '';
+        $tagText = is_array($tag) ? ($tag['tag'] ?? ($tag['name'] ?? '')) : trim($tag);
+        if (!empty($tagText)) {
+            $tagSlug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $tagText), '-'));
+            if (!empty($tagSlug)) {
+                return $base . '/tag/' . rawurlencode($tagSlug);
+            }
+        }
+        return $base . '/tag/';
+    }
+}
 ?>

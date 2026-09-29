@@ -78,6 +78,18 @@ if ($firstSegment === 'search') {
     exit;
 }
 
+// 4b. Tag Routing: /tag/{tag-slug} (and optional /tag/{slug}/page/{n})
+if ($firstSegment === 'tag') {
+    if (!empty($secondSegment)) {
+        $_GET['tag'] = strtolower(urldecode($secondSegment));
+        if ($thirdSegment === 'page' && isset($segments[3]) && is_numeric($segments[3])) {
+            $_GET['page'] = (int)$segments[3];
+        }
+    }
+    include __DIR__ . '/tag.php';
+    exit;
+}
+
 // 5. Explicit Post Routing: /post/{slug}
 if ($firstSegment === 'post' && !empty($secondSegment)) {
     routePostSlug($conn, $secondSegment, '', $baseurl);

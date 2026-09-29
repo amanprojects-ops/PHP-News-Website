@@ -193,7 +193,27 @@ if ($author_res) {
   }
 }
 
-// 5. Post URLs (with Google Image Sitemap Extension)
+// 5. Tag URLs
+$tag_query = "SELECT meta_keywords FROM post WHERE postStatus = 'Y' AND meta_keywords IS NOT NULL AND meta_keywords != ''";
+$tag_res = mysqli_query($conn, $tag_query);
+$sitemap_tags = [];
+if ($tag_res) {
+  while ($tr = mysqli_fetch_assoc($tag_res)) {
+    $tTags = array_map('trim', explode(',', $tr['meta_keywords']));
+    foreach ($tTags as $tTag) {
+      if (!empty($tTag)) {
+        $tLower = strtolower($tTag);
+        $sitemap_tags[$tLower] = true;
+      }
+    }
+  }
+}
+foreach (array_keys($sitemap_tags) as $sTag) {
+  $tag_url = getTagUrl($sTag, $site_domain);
+  print_sitemap_url($tag_url, $today, 'weekly', '0.6');
+}
+
+// 6. Post URLs (with Google Image Sitemap Extension)
 $post_query = "SELECT p.post_id, p.title, p.post_slug, p.post_date, p.post_img, c.category_slug 
                FROM post p 
                LEFT JOIN category c ON p.category = c.category_id 

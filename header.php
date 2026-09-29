@@ -85,6 +85,17 @@ switch ($page) {
     }
     break;
 
+  case 'tag.php':
+    if (isset($_GET['tag']) && !empty($_GET['tag'])) {
+      $tag_name = ucwords(str_replace('-', ' ', strtolower(trim($_GET['tag']))));
+      $page_title = '#' . $tag_name . ' - Articles & News';
+      $page_description = 'Browse all articles and news tagged with "' . $tag_name . '". Find the latest posts related to ' . $tag_name . '.';
+    } else {
+      $page_title = 'All Tags';
+      $page_description = 'Browse all tags and topics. Find articles by tag.';
+    }
+    break;
+
   default:
     $page_title = !empty($settings['websiteTitle']) ? $settings['websiteTitle'] : ($settings['websitename'] ?? 'News Portal');
     break;

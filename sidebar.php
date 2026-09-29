@@ -126,7 +126,7 @@ if ($tags_res && mysqli_num_rows($tags_res) > 0) {
       </h5>
       <div class="d-flex flex-wrap gap-2">
         <?php foreach ($trending_tags as $tag): 
-          $tagLink = $baseurl . '/search.php?search=' . urlencode($tag);
+          $tagLink = getTagUrl($tag, $baseurl);
         ?>
           <a href="<?php echo $tagLink; ?>" class="badge bg-light text-secondary text-decoration-none px-3 py-2 rounded-pill border hover-pill" style="transition: all 0.3s ease;">
             #<?php echo htmlspecialchars(ucwords($tag)); ?>
