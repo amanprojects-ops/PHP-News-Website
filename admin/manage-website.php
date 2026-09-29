@@ -20,7 +20,7 @@ $s = $sQ ? mysqli_fetch_assoc($sQ) : [];
 
 // Determine active tab from URL query param
 $activeTab = htmlspecialchars($_GET['tab'] ?? 'general');
-$validTabs = ['general', 'branding', 'seo', 'smtp', 'custom'];
+$validTabs = ['general', 'branding', 'seo', 'smtp', 'custom', 'telegram'];
 if (!in_array($activeTab, $validTabs, true)) {
     $activeTab = 'general';
 }
@@ -74,6 +74,11 @@ if (!in_array($activeTab, $validTabs, true)) {
             <li class="nav-item">
                 <button class="nav-link <?php echo ($activeTab === 'custom') ? 'active' : ''; ?>" data-bs-toggle="pill" data-bs-target="#tab-custom" type="button" role="tab">
                     <i class="bx bx-code-block me-1"></i> Analytics &amp; Scripts
+                </button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link <?php echo ($activeTab === 'telegram') ? 'active' : ''; ?>" data-bs-toggle="pill" data-bs-target="#tab-telegram" type="button" role="tab">
+                    <i class="bx bxl-telegram me-1"></i> Telegram Services
                 </button>
             </li>
         </ul>
@@ -600,6 +605,173 @@ if (!in_array($activeTab, $validTabs, true)) {
 
         </div>
 
+            <!-- TAB 6: TELEGRAM SERVICES -->
+            <div class="tab-pane fade <?php echo ($activeTab === 'telegram') ? 'show active' : ''; ?>" id="tab-telegram" role="tabpanel">
+                <div class="row g-4">
+
+                    <!-- Bot Configuration Card -->
+                    <div class="col-lg-7">
+                        <div class="card border h-100">
+                            <div class="card-header border-bottom py-3 d-flex justify-content-between align-items-center">
+                                <h5 class="mb-0"><i class="bx bxl-telegram me-2 text-primary"></i>Bot Token &amp; Chat IDs</h5>
+                                <span class="badge bg-label-primary">Telegram API</span>
+                            </div>
+                            <div class="card-body py-4">
+                                <form action="app/app.php" method="POST" id="telegramSettingsForm">
+                                    <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
+
+                                    <!-- Enable Toggle -->
+                                    <div class="border rounded-3 p-3 mb-4 bg-light d-flex align-items-center justify-content-between">
+                                        <div>
+                                            <h6 class="fw-bold mb-0 text-dark"><i class="bx bxl-telegram me-2 text-primary"></i>Telegram Notifications</h6>
+                                            <small class="text-muted">Send new post alerts to your Telegram group and/or channel automatically.</small>
+                                        </div>
+                                        <div class="form-check form-switch form-switch-lg">
+                                            <input class="form-check-input" type="checkbox" id="telegramEnabled" name="telegramEnabled" value="1" <?php echo (!empty($s['telegramEnabled'])) ? 'checked' : ''; ?>>
+                                        </div>
+                                    </div>
+
+                                    <div class="row g-3">
+                                        <!-- Bot Token -->
+                                        <div class="col-12">
+                                            <label class="form-label fw-semibold" for="telegramBotToken">Bot Token <span class="text-danger">*</span></label>
+                                            <div class="input-group input-group-merge">
+                                                <span class="input-group-text"><i class="bx bx-key"></i></span>
+                                                <input type="password" class="form-control" id="telegramBotToken" name="telegramBotToken"
+                                                    placeholder="<?php echo !empty($s['telegramBotToken']) ? '•••••••• (leave blank to keep current)' : 'e.g. 123456789:AAH...'; ?>"
+                                                    autocomplete="new-password">
+                                                <span class="input-group-text cursor-pointer" id="toggleTgToken"><i class="bx bx-hide" id="tgTokenIcon"></i></span>
+                                            </div>
+                                            <div class="form-text">Get from <a href="https://t.me/BotFather" target="_blank">@BotFather</a>. Never share this publicly.</div>
+                                        </div>
+
+                                        <!-- Group ID -->
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-semibold" for="telegramGroupId">Group Chat ID</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="bx bx-group"></i></span>
+                                                <input type="text" class="form-control" id="telegramGroupId" name="telegramGroupId"
+                                                    value="<?php echo htmlspecialchars($s['telegramGroupId'] ?? ''); ?>"
+                                                    placeholder="e.g. -100123456789">
+                                            </div>
+                                            <div class="form-text">Negative integer for supergroups. Add bot as admin first.</div>
+                                        </div>
+
+                                        <!-- Channel ID -->
+                                        <div class="col-md-6">
+                                            <label class="form-label fw-semibold" for="telegramChannelId">Channel ID / Username</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="bx bx-broadcast"></i></span>
+                                                <input type="text" class="form-control" id="telegramChannelId" name="telegramChannelId"
+                                                    value="<?php echo htmlspecialchars($s['telegramChannelId'] ?? ''); ?>"
+                                                    placeholder="e.g. @mychannel or -100987654321">
+                                            </div>
+                                            <div class="form-text">Use @username format or numeric ID. Bot must be admin in channel.</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-4 text-end">
+                                        <button type="submit" name="updateTelegramSettings" class="btn btn-primary px-4">
+                                            <i class="bx bx-save me-1"></i> Save Telegram Settings
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Webhook & Test Card -->
+                    <div class="col-lg-5">
+                        <div class="row g-4">
+                            <!-- Webhook Runner Card -->
+                            <div class="col-12">
+                                <div class="card border shadow-sm">
+                                    <div class="card-header border-bottom py-3 bg-light">
+                                        <h6 class="mb-0 fw-bold"><i class="bx bx-link-alt me-2 text-info"></i>Webhook Runner</h6>
+                                    </div>
+                                    <div class="card-body py-4">
+                                        <p class="small text-muted mb-3">
+                                            Register a webhook URL so Telegram sends incoming updates directly to your server in real-time.
+                                            Set the full HTTPS URL of your webhook handler below.
+                                        </p>
+
+                                        <div class="mb-3">
+                                            <label class="form-label fw-semibold" for="webhookUrl">Webhook URL</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text"><i class="bx bx-globe"></i></span>
+                                                <input type="url" class="form-control" id="webhookUrl" placeholder="https://yourdomain.com/admin/app/webhook.php">
+                                            </div>
+                                            <div class="form-text">Must be an HTTPS URL publicly accessible by Telegram servers.</div>
+                                        </div>
+
+                                        <div class="d-flex gap-2 mb-3">
+                                            <button type="button" class="btn btn-info flex-fill" id="btnSetWebhook">
+                                                <i class="bx bx-plug me-1"></i> Set Webhook
+                                            </button>
+                                            <button type="button" class="btn btn-outline-danger flex-fill" id="btnDeleteWebhook">
+                                                <i class="bx bx-unlink me-1"></i> Remove
+                                            </button>
+                                        </div>
+
+                                        <button type="button" class="btn btn-outline-secondary w-100 btn-sm" id="btnGetWebhookInfo">
+                                            <i class="bx bx-info-circle me-1"></i> Get Webhook Status
+                                        </button>
+
+                                        <div id="webhookResult" class="mt-3" style="display:none;">
+                                            <div class="alert p-3 small" id="webhookResultAlert"></div>
+                                            <pre class="bg-dark text-light p-2 rounded small" id="webhookResultJson" style="max-height:160px;overflow-y:auto;font-size:11px;"></pre>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Live Test Card -->
+                            <div class="col-12">
+                                <div class="card border shadow-sm">
+                                    <div class="card-header border-bottom py-3 bg-light">
+                                        <h6 class="mb-0 fw-bold"><i class="bx bx-send me-2 text-success"></i>Live Connection Test</h6>
+                                    </div>
+                                    <div class="card-body py-4">
+                                        <p class="small text-muted mb-3">
+                                            Verify your bot token and send a test message to the selected target.
+                                        </p>
+
+                                        <div class="mb-3">
+                                            <label class="form-label fw-semibold" for="tgTestTarget">Test Target</label>
+                                            <select class="form-select form-select-sm" id="tgTestTarget">
+                                                <option value="group">Group</option>
+                                                <option value="channel">Channel</option>
+                                            </select>
+                                        </div>
+
+                                        <div class="mb-3">
+                                            <label class="form-label fw-semibold" for="tgTestMessage">Test Message</label>
+                                            <textarea class="form-control form-control-sm" id="tgTestMessage" rows="2">🚀 Telegram bot connection test from <?php echo htmlspecialchars($s['websitename'] ?? 'News Portal'); ?>. Connection successful!</textarea>
+                                        </div>
+
+                                        <div class="d-flex gap-2">
+                                            <button type="button" class="btn btn-success flex-fill" id="btnTestBotToken">
+                                                <i class="bx bxl-telegram me-1"></i> Verify Token
+                                            </button>
+                                            <button type="button" class="btn btn-primary flex-fill" id="btnSendTgTest">
+                                                <i class="bx bx-paper-plane me-1"></i> Send Test
+                                            </button>
+                                        </div>
+
+                                        <div id="tgTestResult" class="mt-3" style="display:none;">
+                                            <div class="alert p-3 small" id="tgTestResultAlert"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
     </div>
 </div>
 
@@ -729,6 +901,116 @@ if (!in_array($activeTab, $validTabs, true)) {
                 window.history.pushState({path: newurl}, '', newurl);
             }
         });
+
+        // ── Telegram Tab Scripts ──────────────────────────────────────────
+
+        // Toggle Bot Token visibility
+        $('#toggleTgToken').on('click', function() {
+            var inp = $('#telegramBotToken');
+            var ico = $('#tgTokenIcon');
+            if (inp.attr('type') === 'password') {
+                inp.attr('type', 'text');
+                ico.removeClass('bx-hide').addClass('bx-show');
+            } else {
+                inp.attr('type', 'password');
+                ico.removeClass('bx-show').addClass('bx-hide');
+            }
+        });
+
+        // Helper: show webhook result panel
+        function showWebhookResult(ok, message, json) {
+            var alert = $('#webhookResultAlert');
+            $('#webhookResult').slideDown();
+            if (ok) {
+                alert.removeClass('alert-danger').addClass('alert-success')
+                     .html('<i class="bx bx-check-circle me-1"></i><strong>Success:</strong> ' + message);
+            } else {
+                alert.removeClass('alert-success').addClass('alert-danger')
+                     .html('<i class="bx bx-x-circle me-1"></i><strong>Error:</strong> ' + message);
+            }
+            if (json) {
+                $('#webhookResultJson').text(JSON.stringify(json, null, 2));
+            }
+        }
+
+        // Helper: Telegram AJAX wrapper
+        function tgAjax(action, extra, callback) {
+            $.ajax({
+                url: 'app/telegram-api.php',
+                type: 'POST',
+                data: $.extend({ action: action, csrf_token: '<?php echo $csrf_token; ?>' }, extra),
+                dataType: 'json',
+                success: callback,
+                error: function(xhr, status, err) {
+                    callback({ ok: false, description: 'AJAX Error: ' + err });
+                }
+            });
+        }
+
+        // Set Webhook
+        $('#btnSetWebhook').on('click', function() {
+            var url = $('#webhookUrl').val().trim();
+            if (!url) { Swal.fire({ icon: 'warning', title: 'Webhook URL Required', text: 'Please enter the full HTTPS webhook URL.' }); return; }
+            var btn = $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Setting...');
+            tgAjax('set_webhook', { webhook_url: url }, function(resp) {
+                btn.prop('disabled', false).html('<i class="bx bx-plug me-1"></i> Set Webhook');
+                showWebhookResult(resp.ok, resp.description || resp.message, resp.result);
+            });
+        });
+
+        // Delete Webhook
+        $('#btnDeleteWebhook').on('click', function() {
+            var btn = $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Removing...');
+            tgAjax('delete_webhook', {}, function(resp) {
+                btn.prop('disabled', false).html('<i class="bx bx-unlink me-1"></i> Remove');
+                showWebhookResult(resp.ok, resp.description || resp.message, resp.result);
+            });
+        });
+
+        // Get Webhook Info
+        $('#btnGetWebhookInfo').on('click', function() {
+            var btn = $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Fetching...');
+            tgAjax('get_webhook_info', {}, function(resp) {
+                btn.prop('disabled', false).html('<i class="bx bx-info-circle me-1"></i> Get Webhook Status');
+                showWebhookResult(resp.ok, resp.ok ? 'Webhook info retrieved.' : (resp.description || 'Failed'), resp.result);
+            });
+        });
+
+        // Verify Bot Token (getMe)
+        $('#btnTestBotToken').on('click', function() {
+            var btn = $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Verifying...');
+            tgAjax('get_me', {}, function(resp) {
+                btn.prop('disabled', false).html('<i class="bx bxl-telegram me-1"></i> Verify Token');
+                var msg = resp.ok
+                    ? '✅ Bot verified: <strong>@' + (resp.result && resp.result.username ? resp.result.username : 'N/A') + '</strong>'
+                    : '<i class="bx bx-x-circle me-1"></i> ' + (resp.description || 'Invalid token.');
+                $('#tgTestResult').slideDown();
+                $('#tgTestResultAlert')
+                    .removeClass('alert-success alert-danger')
+                    .addClass(resp.ok ? 'alert-success' : 'alert-danger')
+                    .html(msg);
+            });
+        });
+
+        // Send Test Message
+        $('#btnSendTgTest').on('click', function() {
+            var target = $('#tgTestTarget').val();
+            var text   = $('#tgTestMessage').val().trim();
+            if (!text) { return; }
+            var btn = $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Sending...');
+            tgAjax('send_test', { target: target, message: text }, function(resp) {
+                btn.prop('disabled', false).html('<i class="bx bx-paper-plane me-1"></i> Send Test');
+                var msg = resp.ok
+                    ? '✅ Message sent to <strong>' + target + '</strong>! Message ID: ' + (resp.result && resp.result.message_id ? resp.result.message_id : 'N/A')
+                    : '<i class="bx bx-x-circle me-1"></i> ' + (resp.description || 'Failed to send.');
+                $('#tgTestResult').slideDown();
+                $('#tgTestResultAlert')
+                    .removeClass('alert-success alert-danger')
+                    .addClass(resp.ok ? 'alert-success' : 'alert-danger')
+                    .html(msg);
+            });
+        });
+
     });
 </script>
 
