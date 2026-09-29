@@ -4,6 +4,44 @@ include_once 'config.php';
 include_once __DIR__ . '/telegram_bot.php';
 include_once __DIR__ . '/../../database/Mailer.php';
 
+// OTP Email Template Function
+function getOtpEmailTemplate($otp, $websiteName = 'Our Platform') {
+    return '
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>OTP Verification</title>
+        <style>
+            body { font-family: Arial, sans-serif; background-color: #f4f7fc; margin: 0; padding: 0; }
+            .container { max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); overflow: hidden; }
+            .header { background-color: #1e90ff; padding: 20px; text-align: center; color: #ffffff; }
+            .header h2 { margin: 0; font-size: 24px; font-weight: 600; }
+            .content { padding: 30px; color: #333333; line-height: 1.6; }
+            .otp-box { background-color: #f8f9fa; border: 1px dashed #1e90ff; padding: 15px; text-align: center; font-size: 32px; font-weight: bold; color: #1e90ff; letter-spacing: 5px; margin: 20px 0; border-radius: 5px; }
+            .footer { background-color: #f1f1f1; padding: 15px; text-align: center; font-size: 12px; color: #777777; }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <h2>' . htmlspecialchars($websiteName) . '</h2>
+            </div>
+            <div class="content">
+                <p>Hello,</p>
+                <p>You requested a One-Time Password (OTP) for your account verification. Please use the following code to complete your process:</p>
+                <div class="otp-box">' . htmlspecialchars($otp) . '</div>
+                <p>This code is valid for <strong>15 minutes</strong>. If you did not request this, please ignore this email.</p>
+                <p>Best regards,<br>The ' . htmlspecialchars($websiteName) . ' Team</p>
+            </div>
+            <div class="footer">
+                &copy; ' . date('Y') . ' ' . htmlspecialchars($websiteName) . '. All rights reserved.
+            </div>
+        </div>
+    </body>
+    </html>';
+}
+
 // Reusable Secure File Upload Function
 function handleUpload($fileKey, $targetDir, $allowedExts = ['jpeg', 'jpg', 'png', 'webp', 'ico'], $maxSize = 2097152)
 {
@@ -97,12 +135,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($logData['role'] == 3) {
                     // Send OTP for public users
                     $otp = sprintf("%06d", mt_rand(100000, 999999));
-                    $expiry = date('Y-m-d H:i:s', strtotime('+15 minutes'));
                     $uid = $logData['user_id'];
-                    mysqli_query($conn, "UPDATE user SET otp_code='{$otp}', otp_expiry='{$expiry}' WHERE user_id={$uid}");
+                    mysqli_query($conn, "UPDATE user SET otp_code='{$otp}', otp_expiry=DATE_ADD(NOW(), INTERVAL 15 MINUTE) WHERE user_id={$uid}");
                     
-                    $subject = "Your Login OTP";
-                    $body = "<h3>Login OTP Verification</h3><p>Your OTP code is: <strong>{$otp}</strong></p><p>It expires in 15 minutes.</p>";
+                    $settingd = mysqli_fetch_assoc(mysqli_query($conn, "SELECT websitename FROM settings LIMIT 1"));
+                    $websiteName = $settingd['websitename'] ?? 'Our Platform';
+                    $subject = "Your Login OTP - " . $websiteName;
+                    $body = getOtpEmailTemplate($otp, $websiteName);
                     sendSystemMail($conn, $logData['email'], $subject, $body);
                     
                     $_SESSION['pending_otp_uid'] = $uid;
@@ -136,7 +175,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $role = 3; // Role 3 for public users/contributors
         $userStatus = 'N'; // Inactive until OTP is verified
         $otp = sprintf("%06d", mt_rand(100000, 999999));
-        $expiry = date('Y-m-d H:i:s', strtotime('+15 minutes'));
 
         // Check if username or email already exists
         $checkQ = "SELECT * FROM user WHERE username = '{$username}' OR email = '{$userEmail}'";
@@ -145,11 +183,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             setSession('error', 'Username or Email already exists. Please choose a different one.');
             redirect('../register.php');
         } else {
-            $insertQ = "INSERT INTO user(first_name,last_name,phone,email,role,taken,username,password,userStatus,otp_code,otp_expiry) VALUES('{$first_name}','{$last_name}','{$userMobile}','{$userEmail}',{$role},0,'{$username}','{$password}','{$userStatus}','{$otp}','{$expiry}')";
+            $insertQ = "INSERT INTO user(first_name,last_name,phone,email,role,taken,username,password,userStatus,otp_code,otp_expiry) VALUES('{$first_name}','{$last_name}','{$userMobile}','{$userEmail}',{$role},0,'{$username}','{$password}','{$userStatus}','{$otp}',DATE_ADD(NOW(), INTERVAL 15 MINUTE))";
             if (mysqli_query($conn, $insertQ)) {
                 $uid = mysqli_insert_id($conn);
-                $subject = "Verify Your Email";
-                $body = "<h3>Email Verification</h3><p>Your OTP code is: <strong>{$otp}</strong></p><p>It expires in 15 minutes.</p>";
+                $settingd = mysqli_fetch_assoc(mysqli_query($conn, "SELECT websitename FROM settings LIMIT 1"));
+                $websiteName = $settingd['websitename'] ?? 'Our Platform';
+                
+                $subject = "Verify Your Email - " . $websiteName;
+                $body = getOtpEmailTemplate($otp, $websiteName);
                 sendSystemMail($conn, $userEmail, $subject, $body);
                 
                 $_SESSION['pending_otp_uid'] = $uid;
