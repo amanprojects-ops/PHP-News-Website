@@ -241,6 +241,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             redirect('../verify-otp.php');
         }
     }
+    // Resend OTP Process Code =======================================================
+    elseif (isset($_POST['resendOtpBtn'])) {
+        if (!isset($_SESSION['pending_otp_uid'])) {
+            redirect('../index.php');
+        }
+        
+        $uid = (int)$_SESSION['pending_otp_uid'];
+        $checkQ = "SELECT * FROM user WHERE user_id = {$uid}";
+        $checkRes = mysqli_query($conn, $checkQ);
+        
+        if (mysqli_num_rows($checkRes) > 0) {
+            $logData = mysqli_fetch_assoc($checkRes);
+            
+            $otp = sprintf("%06d", mt_rand(100000, 999999));
+            mysqli_query($conn, "UPDATE user SET otp_code='{$otp}', otp_expiry=DATE_ADD(NOW(), INTERVAL 15 MINUTE) WHERE user_id={$uid}");
+            
+            $settingd = mysqli_fetch_assoc(mysqli_query($conn, "SELECT websitename FROM settings LIMIT 1"));
+            $websiteName = $settingd['websitename'] ?? 'Our Platform';
+            $subject = "Your New OTP - " . $websiteName;
+            $body = getOtpEmailTemplate($otp, $websiteName);
+            sendSystemMail($conn, $logData['email'], $subject, $body);
+            
+            setSession('success', 'A new OTP has been sent to your email.');
+        } else {
+            setSession('error', 'User not found. Please register or login again.');
+            unset($_SESSION['pending_otp_uid']);
+            redirect('../index.php');
+        }
+        redirect('../verify-otp.php');
+    }
     // Post Rajection Codes =================================================
     elseif (isset($_POST['postRajected'])) {
         $postid = mysqli_real_escape_string($conn, $_POST['postR']);

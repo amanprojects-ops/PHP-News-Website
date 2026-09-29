@@ -380,6 +380,13 @@ $url = $settingd['websiteUrl']; ?>
                                 <button class="btn btn-primary d-grid w-100" name="verifyOtpBtn" type="submit">Verify OTP</button>
                             </div>
                         </form>
+                        
+                        <form action="./app/app.php" method="POST">
+                            <p class="text-center mt-3">
+                                <span>Didn't receive the code?</span>
+                                <button class="btn btn-link p-0 text-primary fw-semibold border-0" name="resendOtpBtn" type="submit">Resend OTP</button>
+                            </p>
+                        </form>
                     </div>
                 </div>
                 <!-- /Register -->
