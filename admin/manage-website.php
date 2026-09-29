@@ -603,8 +603,6 @@ if (!in_array($activeTab, $validTabs, true)) {
                 </form>
             </div>
 
-        </div>
-
             <!-- TAB 6: TELEGRAM SERVICES -->
             <div class="tab-pane fade <?php echo ($activeTab === 'telegram') ? 'show active' : ''; ?>" id="tab-telegram" role="tabpanel">
                 <div class="row g-4">
@@ -667,6 +665,36 @@ if (!in_array($activeTab, $validTabs, true)) {
                                                     placeholder="e.g. @mychannel or -100987654321">
                                             </div>
                                             <div class="form-text">Use @username format or numeric ID. Bot must be admin in channel.</div>
+                                        </div>
+                                        
+                                        <!-- Extract Chat IDs Tool -->
+                                        <div class="col-12 mt-3">
+                                            <div class="border rounded p-3 bg-light">
+                                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                                    <div>
+                                                        <h6 class="mb-0 fw-bold"><i class="bx bx-radar me-1 text-primary"></i>Extract Chat IDs</h6>
+                                                        <small class="text-muted">Fetch recent chats where bot is added. (Make sure Webhook is disabled first!)</small>
+                                                    </div>
+                                                    <button type="button" class="btn btn-sm btn-outline-primary" id="btnExtractChatIds">
+                                                        <i class="bx bx-search-alt me-1"></i> Extract IDs
+                                                    </button>
+                                                </div>
+                                                <div id="extractedChatsContainer" style="display:none;">
+                                                    <div class="alert small mb-2" id="extractedChatsAlert"></div>
+                                                    <div class="table-responsive">
+                                                        <table class="table table-sm table-bordered bg-white mb-0" id="extractedChatsTable" style="display:none;">
+                                                            <thead class="table-light">
+                                                                <tr>
+                                                                    <th>Title / Name</th>
+                                                                    <th>Type</th>
+                                                                    <th>Chat ID</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody></tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
 
@@ -1008,6 +1036,37 @@ if (!in_array($activeTab, $validTabs, true)) {
                     .removeClass('alert-success alert-danger')
                     .addClass(resp.ok ? 'alert-success' : 'alert-danger')
                     .html(msg);
+            });
+        });
+
+        // Extract Chat IDs
+        $('#btnExtractChatIds').on('click', function() {
+            var btn = $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> Extracting...');
+            $('#extractedChatsContainer').slideUp();
+            
+            tgAjax('get_updates', {}, function(resp) {
+                btn.prop('disabled', false).html('<i class="bx bx-search-alt me-1"></i> Extract IDs');
+                $('#extractedChatsContainer').slideDown();
+                
+                var alert = $('#extractedChatsAlert');
+                if (resp.ok) {
+                    var chats = resp.extracted_chats || [];
+                    if (chats.length > 0) {
+                        alert.removeClass('alert-danger alert-warning').addClass('alert-success').html('✅ Found <strong>' + chats.length + '</strong> recent chats.');
+                        var tbody = $('#extractedChatsTable tbody');
+                        tbody.empty();
+                        chats.forEach(function(c) {
+                            tbody.append('<tr><td>' + c.title + '</td><td><span class="badge bg-label-info">' + c.type + '</span></td><td><code class="user-select-all">' + c.id + '</code></td></tr>');
+                        });
+                        $('#extractedChatsTable').show();
+                    } else {
+                        alert.removeClass('alert-danger alert-success').addClass('alert-warning').html('⚠️ No recent chats found. Send a message to the bot or add it to a group first!');
+                        $('#extractedChatsTable').hide();
+                    }
+                } else {
+                    alert.removeClass('alert-success alert-warning').addClass('alert-danger').html('❌ <strong>Error:</strong> ' + resp.description);
+                    $('#extractedChatsTable').hide();
+                }
             });
         });
 

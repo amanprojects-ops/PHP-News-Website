@@ -115,6 +115,41 @@ switch ($action) {
         ]);
         break;
 
+    // Get recent chat IDs via getUpdates
+    case 'get_updates':
+        $result = $bot->getUpdates();
+        $chats = [];
+        if (!empty($result['ok']) && is_array($result['result'])) {
+            foreach ($result['result'] as $update) {
+                $chat = null;
+                if (isset($update['message']['chat'])) {
+                    $chat = $update['message']['chat'];
+                } elseif (isset($update['channel_post']['chat'])) {
+                    $chat = $update['channel_post']['chat'];
+                } elseif (isset($update['my_chat_member']['chat'])) {
+                    $chat = $update['my_chat_member']['chat'];
+                }
+                
+                if ($chat) {
+                    $chats[$chat['id']] = [
+                        'id' => $chat['id'],
+                        'title' => $chat['title'] ?? $chat['username'] ?? $chat['first_name'] ?? 'Unknown',
+                        'type' => $chat['type']
+                    ];
+                }
+            }
+            $result['extracted_chats'] = array_values($chats);
+        }
+        
+        echo json_encode([
+            'ok'          => !empty($result['ok']),
+            'description' => $result['description'] ?? ($result['ok'] ? 'Updates fetched.' : 'Failed to get updates. Webhook might be active.'),
+            'result'      => $result['result'] ?? null,
+            'extracted_chats' => $result['extracted_chats'] ?? [],
+            'logs'        => $bot->getLogs(),
+        ]);
+        break;
+
     default:
         echo json_encode(['ok' => false, 'description' => 'Unknown action: ' . htmlspecialchars($action)]);
         break;

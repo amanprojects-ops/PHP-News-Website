@@ -341,6 +341,15 @@ if (!class_exists('TelegramBot')) {
         {
             return $this->call('getMe', []);
         }
+        /**
+         * Get updates (recent messages/events) to find chat IDs.
+         *
+         * @return array  API response
+         */
+        public function getUpdates(): array
+        {
+            return $this->call('getUpdates', []);
+        }
     }
 }
 
