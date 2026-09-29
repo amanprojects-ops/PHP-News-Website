@@ -727,9 +727,13 @@ if (!in_array($activeTab, $validTabs, true)) {
                                             <label class="form-label fw-semibold" for="webhookUrl">Webhook URL</label>
                                             <div class="input-group">
                                                 <span class="input-group-text"><i class="bx bx-globe"></i></span>
-                                                <input type="url" class="form-control" id="webhookUrl" placeholder="https://yourdomain.com/admin/app/webhook.php">
+                                                <?php $autoWebhook = !empty($s['websiteUrl']) ? rtrim($s['websiteUrl'], '/') . '/admin/app/webhook.php' : ''; ?>
+                                                <input type="url" class="form-control" id="webhookUrl" value="<?php echo htmlspecialchars($autoWebhook); ?>" placeholder="https://yourdomain.com/admin/app/webhook.php">
                                             </div>
                                             <div class="form-text">Must be an HTTPS URL publicly accessible by Telegram servers.</div>
+                                            <div class="alert alert-warning py-2 px-3 small mt-2 mb-0">
+                                                <i class="bx bx-info-circle me-1"></i> <strong>Running Locally?</strong> Telegram cannot reach <code>localhost</code>. Use a tunnel like <a href="https://ngrok.com/" target="_blank">ngrok</a> to get a public HTTPS URL for testing.
+                                            </div>
                                         </div>
 
                                         <div class="d-flex gap-2 mb-3">
