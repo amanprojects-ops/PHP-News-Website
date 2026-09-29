@@ -247,6 +247,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             redirect('../index.php');
         }
         
+        // Rate limiting: 60 seconds cooldown for Resend OTP
+        if (isset($_SESSION['last_otp_time']) && time() - $_SESSION['last_otp_time'] < 60) {
+            $wait = 60 - (time() - $_SESSION['last_otp_time']);
+            setSession('error', "Please wait {$wait} seconds before requesting a new OTP.");
+            redirect('../verify-otp.php');
+        }
+        
         $uid = (int)$_SESSION['pending_otp_uid'];
         $checkQ = "SELECT * FROM user WHERE user_id = {$uid}";
         $checkRes = mysqli_query($conn, $checkQ);
@@ -263,6 +270,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $body = getOtpEmailTemplate($otp, $websiteName);
             sendSystemMail($conn, $logData['email'], $subject, $body);
             
+            $_SESSION['last_otp_time'] = time(); // Set the cooldown timer
             setSession('success', 'A new OTP has been sent to your email.');
         } else {
             setSession('error', 'User not found. Please register or login again.');
