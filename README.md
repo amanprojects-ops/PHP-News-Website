@@ -154,6 +154,60 @@ If you prefer to configure the database manually:
 
 ---
 
+## 🤖 **Telegram Bot & Webhook Setup**
+
+To enable automatic notifications and manage your website directly from Telegram, follow these steps to configure your bot and webhook.
+
+### **1. Create a Telegram Bot**
+- Open Telegram and search for **[@BotFather](https://t.me/BotFather)**.
+- Send `/newbot` and follow the prompts to create your bot.
+- Copy the **Bot Token** provided (e.g., `123456789:ABCDEF...`).
+
+### **2. Configure Bot in System Manager**
+- Go to the Admin Dashboard and open **Manage Website** -> **Settings** -> **Telegram Services** tab.
+- Enable **Telegram Notifications** and paste your **Bot Token**.
+- Add your bot to your Group and/or Channel as an **Administrator**.
+- Click the **Extract IDs** button (Make sure the webhook is removed first!) to find and copy your Group ID or Channel ID, then paste them into the respective fields.
+- Click **Save Telegram Settings**.
+
+### **3. Setup Webhook (For Real-Time Updates)**
+- *Note: You must have a live server with SSL (`https://`) to use Webhooks.*
+- In the Telegram Services tab, scroll to the **Webhook Runner** section.
+- Enter your webhook URL pointing to `admin/app/webhook.php` (e.g., `https://yourdomain.com/admin/app/webhook.php`).
+- Click **Set Webhook**.
+- Use the **Live Connection Test** card to verify that your bot is sending messages correctly!
+
+---
+
+## ⏱️ **Cron Job Setup (Automated Tasks)**
+
+The platform supports automated background tasks (like sending delayed notifications, clearing old logs, or cleaning up drafts) using Cron Jobs.
+
+### **1. Configure on Live Server (cPanel / Plesk)**
+- Open your hosting control panel (e.g., cPanel).
+- Navigate to the **Cron Jobs** section.
+- Add a new Cron Job to run every 5 or 15 minutes (depending on your needs).
+- Set the command to execute the cron script. Example using `curl` or `wget`:
+  ```bash
+  wget -q -O - https://yourdomain.com/cron/post-notifications.php >/dev/null 2>&1
+  ```
+  *(Alternatively, you can run the PHP script directly if your host allows: `/usr/local/bin/php /path/to/public_html/cron/post-notifications.php`)*
+
+### **2. Local Testing (XAMPP / WAMP)**
+If you are developing locally and want to test the Cron Job without a live server:
+- Open your web browser.
+- Navigate directly to the cron script URL:
+  ```text
+  http://localhost/PHP-News-Website/cron/post-notifications.php
+  ```
+- Alternatively, you can run it via the command line or PowerShell:
+  ```powershell
+  php.exe C:\xampp\htdocs\PHP-News-Website\cron\post-notifications.php
+  ```
+- The script will execute once, allowing you to test if pending notifications or scheduled tasks run correctly.
+
+---
+
 ## 📁 **Project File Structure**
 
 ```text
