@@ -267,6 +267,29 @@ switch ($page) {
       transform: translateY(-1px);
     }
 
+    .top-bar-user {
+      display: flex;
+      align-items: center;
+      border-left: 1px solid rgba(255, 255, 255, 0.1);
+      padding-left: 15px;
+      margin-left: 15px;
+    }
+
+    .top-bar-user a {
+      color: #e2e8f0;
+      transition: color 0.2s;
+      text-decoration: none;
+      margin-left: 15px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .top-bar-user a:hover {
+      color: var(--primary-color);
+    }
+
     /* Main Branding Header Row */
     .main-header {
       background: #ffffff;
@@ -616,6 +639,15 @@ switch ($page) {
               <a href="#"><i class="fa fa-twitter"></i></a>
               <a href="#"><i class="fa fa-instagram"></i></a>
               <a href="#"><i class="fa fa-linkedin"></i></a>
+            <?php endif; ?>
+          </div>
+          <div class="top-bar-user">
+            <?php if (isset($_SESSION['username'])): ?>
+              <a href="<?php echo $baseurl; ?>/admin/dashboard.php"><i class="fa fa-dashboard"></i> Dashboard</a>
+              <a href="<?php echo $baseurl; ?>/admin/logout.php"><i class="fa fa-sign-out"></i> Logout</a>
+            <?php else: ?>
+              <a href="<?php echo $baseurl; ?>/admin/index.php"><i class="fa fa-sign-in"></i> Login</a>
+              <a href="<?php echo $baseurl; ?>/admin/register.php"><i class="fa fa-user-plus"></i> Register</a>
             <?php endif; ?>
           </div>
         </div>
