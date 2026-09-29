@@ -32,6 +32,25 @@ if ($sidebar_cat_res && mysqli_num_rows($sidebar_cat_res) > 0) {
     $sidebar_categories[] = $c_row;
   }
 }
+
+// Fetch Trending Tags for Sidebar Widget
+$trending_tags = [];
+$tags_query = "SELECT meta_keywords FROM post WHERE postStatus = 'Y' AND meta_keywords IS NOT NULL AND meta_keywords != ''";
+$tags_res = mysqli_query($conn, $tags_query);
+if ($tags_res && mysqli_num_rows($tags_res) > 0) {
+    $all_tags = [];
+    while ($row = mysqli_fetch_assoc($tags_res)) {
+        $post_tags = array_map('trim', explode(',', $row['meta_keywords']));
+        foreach ($post_tags as $tag) {
+            if (!empty($tag)) {
+                $all_tags[] = strtolower($tag);
+            }
+        }
+    }
+    $tag_counts = array_count_values($all_tags);
+    arsort($tag_counts);
+    $trending_tags = array_slice(array_keys($tag_counts), 0, 10);
+}
 ?>
 
 <div id="sidebar" class="col-md-4">
@@ -99,24 +118,24 @@ if ($sidebar_cat_res && mysqli_num_rows($sidebar_cat_res) > 0) {
   <?php endif; ?>
 
   <!-- Trending Tags Widget -->
+  <?php if (!empty($trending_tags)): ?>
   <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white sidebar-widget">
     <div class="card-body p-4">
       <h5 class="fw-bold text-dark mb-3 border-bottom pb-2 d-flex align-items-center gap-2">
         <i class="fa fa-tags text-success"></i> Trending Topics
       </h5>
       <div class="d-flex flex-wrap gap-2">
-        <?php foreach ($sidebar_categories as $cat): 
-          $catLink = getCategoryUrl($cat, $baseurl);
+        <?php foreach ($trending_tags as $tag): 
+          $tagLink = $baseurl . '/search.php?search=' . urlencode($tag);
         ?>
-          <a href="<?php echo $catLink; ?>" class="badge bg-light text-secondary text-decoration-none px-3 py-2 rounded-pill border hover-pill">
-            #<?php echo htmlspecialchars($cat['category_name']); ?>
+          <a href="<?php echo $tagLink; ?>" class="badge bg-light text-secondary text-decoration-none px-3 py-2 rounded-pill border hover-pill" style="transition: all 0.3s ease;">
+            #<?php echo htmlspecialchars(ucwords($tag)); ?>
           </a>
         <?php endforeach; ?>
-        <a href="<?php echo $baseurl; ?>/" class="badge bg-light text-secondary text-decoration-none px-3 py-2 rounded-pill border hover-pill">#EarnBro</a>
-        <a href="<?php echo $baseurl; ?>/" class="badge bg-light text-secondary text-decoration-none px-3 py-2 rounded-pill border hover-pill">#MakeMoneyOnline</a>
       </div>
     </div>
   </div>
+  <?php endif; ?>
 
   <!-- Publisher Card Widget -->
   <div class="card border-0 shadow-sm rounded-4 mb-4 bg-primary text-white sidebar-widget">

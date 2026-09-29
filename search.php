@@ -26,7 +26,7 @@
                     category.category_name, category.category_slug, user.username, post.category, post.post_img FROM post
                     LEFT JOIN category ON post.category = category.category_id
                     LEFT JOIN user ON post.author = user.user_id
-                    WHERE (post.title LIKE '%{$search_term}%' OR post.description LIKE '%{$search_term}%') && postStatus = 'Y'
+                    WHERE (post.title LIKE '%{$search_term}%' OR post.description LIKE '%{$search_term}%' OR post.meta_keywords LIKE '%{$search_term}%') && postStatus = 'Y'
                     ORDER BY post.post_id DESC LIMIT {$offset},{$limit}";
 
             $result = mysqli_query($conn, $sql) or die("Query Failed.");
@@ -118,7 +118,7 @@
 
             // show pagination
             $sql1 = "SELECT * FROM post
-                            WHERE post.title LIKE '%{$search_term}%' && postStatus = 'Y'";
+                            WHERE (post.title LIKE '%{$search_term}%' OR post.description LIKE '%{$search_term}%' OR post.meta_keywords LIKE '%{$search_term}%') && postStatus = 'Y'";
             $result1 = mysqli_query($conn, $sql1);
 
             if (mysqli_num_rows($result1) > 0) {

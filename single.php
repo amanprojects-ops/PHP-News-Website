@@ -85,6 +85,23 @@
                                     <p class="description">
                                         <?php echo @$row['description']; ?>
                                     </p>
+                                    <?php 
+                                    if (!empty($row['meta_keywords'])) {
+                                        $tags = array_map('trim', explode(',', $row['meta_keywords']));
+                                        $tags = array_filter($tags); // Remove empty tags
+                                        if (!empty($tags)) {
+                                            echo '<div class="post-tags mt-4 pt-3 border-top">';
+                                            echo '<h5 class="fw-bold mb-3"><i class="fa fa-tags text-primary me-2"></i>Tags</h5>';
+                                            echo '<div class="d-flex flex-wrap gap-2">';
+                                            foreach ($tags as $tag) {
+                                                $tagLink = $baseurl . '/search.php?search=' . urlencode($tag);
+                                                echo '<a href="' . $tagLink . '" class="badge bg-light text-secondary text-decoration-none px-3 py-2 rounded-pill border hover-pill" style="transition: all 0.3s ease;">#' . htmlspecialchars($tag) . '</a>';
+                                            }
+                                            echo '</div>';
+                                            echo '</div>';
+                                        }
+                                    }
+                                    ?>
                                 </div>
 
                             </div>
