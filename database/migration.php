@@ -248,3 +248,30 @@ if (!function_exists('ensureSlugSchema')) {
     }
 }
 
+if (!function_exists('ensureUserOtpSchema')) {
+    function ensureUserOtpSchema($conn) {
+        if (!$conn) return false;
+        
+        $userCols = [];
+        $res = mysqli_query($conn, "SHOW COLUMNS FROM `user`");
+        if ($res) {
+            while ($row = mysqli_fetch_assoc($res)) {
+                $userCols[strtolower($row['Field'])] = true;
+            }
+        }
+
+        if (!isset($userCols['otp_code'])) {
+            mysqli_query($conn, "ALTER TABLE `user` ADD COLUMN `otp_code` VARCHAR(10) DEFAULT NULL");
+        }
+        if (!isset($userCols['otp_expiry'])) {
+            mysqli_query($conn, "ALTER TABLE `user` ADD COLUMN `otp_expiry` DATETIME DEFAULT NULL");
+        }
+        
+        return true;
+    }
+}
+
+// Automatically run all schema checks when migration is included (already handled by ensureSettingsSchema for settings, but we need to call ensureUserOtpSchema)
+if (isset($conn) && $conn) {
+    ensureUserOtpSchema($conn);
+}

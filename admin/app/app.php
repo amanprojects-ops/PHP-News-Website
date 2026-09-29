@@ -2,6 +2,7 @@
 session_start();
 include_once 'config.php';
 include_once __DIR__ . '/telegram_bot.php';
+include_once __DIR__ . '/../../database/Mailer.php';
 
 // Reusable Secure File Upload Function
 function handleUpload($fileKey, $targetDir, $allowedExts = ['jpeg', 'jpg', 'png', 'webp', 'ico'], $maxSize = 2097152)
@@ -93,15 +94,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $logResult = mysqli_query($conn, $login);
         if (mysqli_num_rows($logResult) > 0) {
             while ($logData = mysqli_fetch_assoc($logResult)) {
-                setSession('name', $logData['first_name'] . ' ' . $logData['last_name']);
-                setSession('username', $logData['username']);
-                setSession('phone', $logData['phone']);
-                setSession('email', $logData['email']);
-                setSession('role', $logData['role']);
-                setSession('author_id', $logData['user_id']);
-                setSession('userStatus', $logData['userStatus']);
-                setSession('success', 'You have successfully logged in.');
-                redirect('../dashboard.php');
+                if ($logData['role'] == 3) {
+                    // Send OTP for public users
+                    $otp = sprintf("%06d", mt_rand(100000, 999999));
+                    $expiry = date('Y-m-d H:i:s', strtotime('+15 minutes'));
+                    $uid = $logData['user_id'];
+                    mysqli_query($conn, "UPDATE user SET otp_code='{$otp}', otp_expiry='{$expiry}' WHERE user_id={$uid}");
+                    
+                    $subject = "Your Login OTP";
+                    $body = "<h3>Login OTP Verification</h3><p>Your OTP code is: <strong>{$otp}</strong></p><p>It expires in 15 minutes.</p>";
+                    sendSystemMail($conn, $logData['email'], $subject, $body);
+                    
+                    $_SESSION['pending_otp_uid'] = $uid;
+                    setSession('success', 'OTP sent to your email.');
+                    redirect('../verify-otp.php');
+                } else {
+                    setSession('name', $logData['first_name'] . ' ' . $logData['last_name']);
+                    setSession('username', $logData['username']);
+                    setSession('phone', $logData['phone']);
+                    setSession('email', $logData['email']);
+                    setSession('role', $logData['role']);
+                    setSession('author_id', $logData['user_id']);
+                    setSession('userStatus', $logData['userStatus']);
+                    setSession('success', 'You have successfully logged in.');
+                    redirect('../dashboard.php');
+                }
             }
         } else {
             setSession('warning', 'Invalid username or password.');
@@ -117,7 +134,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $username = mysqli_real_escape_string($conn, trim($_POST['username']));
         $password = mysqli_real_escape_string($conn, trim(md5($_POST['password'])));
         $role = 3; // Role 3 for public users/contributors
-        $userStatus = 'Y'; // Active by default to let them login and post drafts
+        $userStatus = 'N'; // Inactive until OTP is verified
+        $otp = sprintf("%06d", mt_rand(100000, 999999));
+        $expiry = date('Y-m-d H:i:s', strtotime('+15 minutes'));
 
         // Check if username or email already exists
         $checkQ = "SELECT * FROM user WHERE username = '{$username}' OR email = '{$userEmail}'";
@@ -126,14 +145,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             setSession('error', 'Username or Email already exists. Please choose a different one.');
             redirect('../register.php');
         } else {
-            $insertQ = "INSERT INTO user(first_name,last_name,phone,email,role,taken,username,password,userStatus) VALUES('{$first_name}','{$last_name}','{$userMobile}','{$userEmail}',{$role},0,'{$username}','{$password}','{$userStatus}')";
+            $insertQ = "INSERT INTO user(first_name,last_name,phone,email,role,taken,username,password,userStatus,otp_code,otp_expiry) VALUES('{$first_name}','{$last_name}','{$userMobile}','{$userEmail}',{$role},0,'{$username}','{$password}','{$userStatus}','{$otp}','{$expiry}')";
             if (mysqli_query($conn, $insertQ)) {
-                setSession('success', 'Account created successfully! You can now sign in.');
-                redirect('../index.php');
+                $uid = mysqli_insert_id($conn);
+                $subject = "Verify Your Email";
+                $body = "<h3>Email Verification</h3><p>Your OTP code is: <strong>{$otp}</strong></p><p>It expires in 15 minutes.</p>";
+                sendSystemMail($conn, $userEmail, $subject, $body);
+                
+                $_SESSION['pending_otp_uid'] = $uid;
+                setSession('success', 'Account created! Please verify your email with the OTP sent.');
+                redirect('../verify-otp.php');
             } else {
                 setSession('error', 'Failed to create account.');
                 redirect('../register.php');
             }
+        }
+    }
+    // Verify OTP Process Code =======================================================
+    elseif (isset($_POST['verifyOtpBtn'])) {
+        if (!isset($_SESSION['pending_otp_uid'])) {
+            redirect('../index.php');
+        }
+        
+        $uid = (int)$_SESSION['pending_otp_uid'];
+        $otp_code = mysqli_real_escape_string($conn, trim($_POST['otp_code']));
+        
+        $checkQ = "SELECT * FROM user WHERE user_id = {$uid} AND otp_code = '{$otp_code}' AND otp_expiry >= NOW()";
+        $checkRes = mysqli_query($conn, $checkQ);
+        if (mysqli_num_rows($checkRes) > 0) {
+            $logData = mysqli_fetch_assoc($checkRes);
+            
+            // Mark user active if they were 'N'
+            if ($logData['userStatus'] == 'N') {
+                mysqli_query($conn, "UPDATE user SET userStatus = 'Y', otp_code = NULL, otp_expiry = NULL WHERE user_id = {$uid}");
+                $logData['userStatus'] = 'Y';
+            } else {
+                mysqli_query($conn, "UPDATE user SET otp_code = NULL, otp_expiry = NULL WHERE user_id = {$uid}");
+            }
+            
+            // Log them in
+            setSession('name', $logData['first_name'] . ' ' . $logData['last_name']);
+            setSession('username', $logData['username']);
+            setSession('phone', $logData['phone']);
+            setSession('email', $logData['email']);
+            setSession('role', $logData['role']);
+            setSession('author_id', $logData['user_id']);
+            setSession('userStatus', $logData['userStatus']);
+            
+            unset($_SESSION['pending_otp_uid']);
+            setSession('success', 'OTP verified successfully. You are now logged in.');
+            redirect('../dashboard.php');
+        } else {
+            setSession('error', 'Invalid or expired OTP. Please try logging in again.');
+            redirect('../verify-otp.php');
         }
     }
     // Post Rajection Codes =================================================

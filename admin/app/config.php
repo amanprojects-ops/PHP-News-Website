@@ -15,6 +15,8 @@ if (!$conn) {
 }
 
 ensureSettingsSchema($conn);
+ensureUserOtpSchema($conn);
+
 
 $limit = 10;
 ?>
