@@ -57,7 +57,12 @@ if (!function_exists('ensureSettingsSchema')) {
             'smtpPass'          => 'TEXT DEFAULT NULL',
             'smtpEncryption'    => 'VARCHAR(10) NOT NULL DEFAULT \'tls\'',
             'smtpFromEmail'     => 'VARCHAR(191) DEFAULT NULL',
-            'smtpFromName'      => 'VARCHAR(191) DEFAULT NULL'
+            'smtpFromName'      => 'VARCHAR(191) DEFAULT NULL',
+            // Telegram Integration
+            'telegramBotToken'  => 'VARCHAR(255) DEFAULT NULL',
+            'telegramGroupId'   => 'VARCHAR(100) DEFAULT NULL',
+            'telegramChannelId' => 'VARCHAR(100) DEFAULT NULL',
+            'telegramEnabled'   => 'TINYINT(1) NOT NULL DEFAULT 0'
         ];
 
         // Fetch existing columns in settings table
@@ -103,7 +108,11 @@ if (!function_exists('ensureSettingsSchema')) {
                 `smtpPass` text DEFAULT NULL,
                 `smtpEncryption` varchar(10) NOT NULL DEFAULT 'tls',
                 `smtpFromEmail` varchar(191) DEFAULT NULL,
-                `smtpFromName` varchar(191) DEFAULT NULL
+                `smtpFromName` varchar(191) DEFAULT NULL,
+                `telegramBotToken` varchar(255) DEFAULT NULL,
+                `telegramGroupId` varchar(100) DEFAULT NULL,
+                `telegramChannelId` varchar(100) DEFAULT NULL,
+                `telegramEnabled` tinyint(1) NOT NULL DEFAULT 0
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;";
             return mysqli_query($conn, $createTableSql);
         }
