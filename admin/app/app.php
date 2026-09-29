@@ -1,6 +1,7 @@
 <?php
 session_start();
 include_once 'config.php';
+include_once __DIR__ . '/telegram_bot.php';
 
 // Reusable Secure File Upload Function
 function handleUpload($fileKey, $targetDir, $allowedExts = ['jpeg', 'jpg', 'png', 'webp', 'ico'], $maxSize = 2097152)
@@ -133,6 +134,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (file_exists($checkFile)) {
             $postApproveQ = "UPDATE post SET postStatus ='Y' WHERE post_id='{$postid}'";
             if (mysqli_query($conn, $postApproveQ)) {
+                // Telegram notification on post approval
+                $tgSettings = mysqli_fetch_assoc(mysqli_query($conn, "SELECT telegramEnabled, websiteUrl FROM settings LIMIT 1"));
+                if (!empty($tgSettings['telegramEnabled'])) {
+                    $tgPostRes = mysqli_query($conn, "SELECT p.*, c.category_name, c.category_slug FROM post p LEFT JOIN category c ON p.category = c.category_id WHERE p.post_id = '{$postid}' LIMIT 1");
+                    $tgPost = $tgPostRes ? mysqli_fetch_assoc($tgPostRes) : null;
+                    if ($tgPost) {
+                        $tgPost['post_url'] = getPostUrl($tgPost, rtrim($tgSettings['websiteUrl'] ?? '', '/'));
+                        sendPostToTelegram($conn, $tgPost, 'both');
+                    }
+                }
                 setSession('success', 'Post approved successfully.');
             } else {
                 setSession('warning', 'Failed to approve post.');
@@ -259,6 +270,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (mysqli_query($conn, $addpQuery)) {
             $newPostId = mysqli_insert_id($conn);
             syncPostSlugs($conn, $newPostId, $clean_slug, $finalAliasesStr);
+            // Telegram notification for new post (pending approval — notify group only as draft alert)
+            $sQ3 = mysqli_query($conn, "SELECT * FROM settings LIMIT 1");
+            $sSet3 = $sQ3 ? mysqli_fetch_assoc($sQ3) : [];
+            if (!empty($sSet3['telegramEnabled'])) {
+                $tgPostRes2 = mysqli_query($conn, "SELECT p.*, c.category_name, c.category_slug FROM post p LEFT JOIN category c ON p.category = c.category_id WHERE p.post_id = '{$newPostId}' LIMIT 1");
+                $tgPost2 = $tgPostRes2 ? mysqli_fetch_assoc($tgPostRes2) : null;
+                if ($tgPost2) {
+                    $tgPost2['post_url'] = getPostUrl($tgPost2, rtrim($sSet3['websiteUrl'] ?? '', '/'));
+                    $tgBot2 = getTelegramBotFromSettings($conn);
+                    if ($tgBot2) {
+                        $siteName2 = $sSet3['websitename'] ?? 'News Portal';
+                        $draftMsg = "📝 <b>New Post Submitted (Pending Approval)</b>\n\n<b>" . htmlspecialchars($tgPost2['title']) . "</b>\n\n" .
+                                    "Category: <i>" . htmlspecialchars($tgPost2['category_name'] ?? '') . "</i>\n" .
+                                    "Author ID: " . htmlspecialchars($tgPost2['author'] ?? '') . "\n\n" .
+                                    "— <i>" . $siteName2 . "</i>";
+                        $tgBot2->sendMessage($draftMsg, 'group');
+                    }
+                }
+            }
             setSession('success', 'New post saved successfully with clean multi-slug routing. <strong>Waiting for approval.</strong>');
         } else {
             setSession('error', 'Failed to save new post. <strong>Please try again.</strong>');
@@ -974,6 +1004,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         setSession('success', $msg);
         redirect('../manage-slugs.php?tab=categories');
+    }
+    // System Settings: Telegram Services ========================================================
+    elseif (isset($_POST['updateTelegramSettings'])) {
+        if (!isset($_SESSION['role']) || (int)$_SESSION['role'] !== 1) {
+            setSession('error', 'Unauthorized access.');
+            redirect('../dashboard.php');
+        }
+        $csrf = $_POST['csrf_token'] ?? '';
+        if (empty($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $csrf)) {
+            setSession('error', 'Security verification failed (Invalid CSRF token).');
+            redirect('../manage-website.php?tab=telegram');
+        }
+
+        $telegramEnabled   = isset($_POST['telegramEnabled']) ? 1 : 0;
+        $telegramGroupId   = trim($_POST['telegramGroupId']   ?? '');
+        $telegramChannelId = trim($_POST['telegramChannelId'] ?? '');
+        $telegramBotToken  = trim($_POST['telegramBotToken']  ?? '');
+
+        if ($telegramBotToken !== '') {
+            // Save with new token
+            $stmt = mysqli_prepare($conn, "UPDATE `settings` SET `telegramEnabled`=?, `telegramBotToken`=?, `telegramGroupId`=?, `telegramChannelId`=?");
+            if ($stmt) {
+                mysqli_stmt_bind_param($stmt, "isss", $telegramEnabled, $telegramBotToken, $telegramGroupId, $telegramChannelId);
+                if (mysqli_stmt_execute($stmt)) {
+                    setSession('success', 'Telegram settings updated successfully.');
+                } else {
+                    setSession('error', 'Failed to update Telegram settings: ' . mysqli_stmt_error($stmt));
+                }
+                mysqli_stmt_close($stmt);
+            } else {
+                setSession('error', 'Database query preparation failed.');
+            }
+        } else {
+            // Keep existing token, update other fields
+            $stmt = mysqli_prepare($conn, "UPDATE `settings` SET `telegramEnabled`=?, `telegramGroupId`=?, `telegramChannelId`=?");
+            if ($stmt) {
+                mysqli_stmt_bind_param($stmt, "iss", $telegramEnabled, $telegramGroupId, $telegramChannelId);
+                if (mysqli_stmt_execute($stmt)) {
+                    setSession('success', 'Telegram settings updated (token unchanged).');
+                } else {
+                    setSession('error', 'Failed to update Telegram settings: ' . mysqli_stmt_error($stmt));
+                }
+                mysqli_stmt_close($stmt);
+            } else {
+                setSession('error', 'Database query preparation failed.');
+            }
+        }
+        redirect('../manage-website.php?tab=telegram');
     }
     // Change Password Code =======================================================================
     elseif (isset($_POST['changeUserPassword'])) {
