@@ -16,7 +16,7 @@ $url = $settingd['websiteUrl']; ?>
     <meta name="viewport"
         content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0" />
 
-    <title>Login | Dashboard</title>
+    <title>Register | <?php echo $settingd['websitename']; ?></title>
 
     <meta name="description" content="<?php echo $settingd['keywords']; ?>" />
     <meta name="keywords" content="<?php echo $settingd['keywords']; ?>">
@@ -362,38 +362,52 @@ $url = $settingd['websiteUrl']; ?>
                             </a>
                         </div>
                         <!-- /Logo -->
-                        <h4 class="mb-2">Welcome to <?php echo $settingd['websitename']; ?>! 👋</h4>
-                        <p class="mb-4">Please sign-in to your account</p>
+                        <h4 class="mb-2">Create an Account 🚀</h4>
+                        <p class="mb-4">Join <?php echo $settingd['websitename']; ?> and start posting!</p>
 
                         <form id="formAuthentication" class="mb-3" action="./app/app.php" method="POST">
-                            <div class="mb-3">
-                                <label for="logUsername" class="form-label">Username</label>
-                                <input type="text" class="form-control" id="logUsername" name="logUsername"
-                                    placeholder="Enter your email or username" autofocus />
-                            </div>
-                            <div class="mb-3 form-password-toggle">
-                                <div class="d-flex justify-content-between">
-                                    <label class="form-label" for="logPassword">Password</label>
-                                    <a href="forgot-password.php">
-                                        <small>Forgot Password?</small>
-                                    </a>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="first_name" class="form-label">First Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="first_name" name="first_name" placeholder="John" required autofocus />
                                 </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="last_name" class="form-label">Last Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="last_name" name="last_name" placeholder="Doe" required />
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="userEmail" class="form-label">Email <span class="text-danger">*</span></label>
+                                <input type="email" class="form-control" id="userEmail" name="userEmail" placeholder="john@example.com" required />
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="userMobile" class="form-label">Phone Number <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="userMobile" name="userMobile" placeholder="e.g. 9876543210" required />
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="username" class="form-label">Username <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control" id="username" name="username" placeholder="johndoe" required />
+                            </div>
+
+                            <div class="mb-3 form-password-toggle">
+                                <label class="form-label" for="password">Password <span class="text-danger">*</span></label>
                                 <div class="input-group input-group-merge">
-                                    <input type="password" id="logPassword" class="form-control" name="logPassword"
-                                        placeholder="&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;"
-                                        aria-describedby="password" />
+                                    <input type="password" id="password" class="form-control" name="password" placeholder="&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;&#xb7;" required />
                                     <span class="input-group-text cursor-pointer"><i class="bx bx-hide"></i></span>
                                 </div>
                             </div>
 
                             <div class="mb-3">
-                                <button class="btn btn-primary d-grid w-100" name="loginBtn" type="submit">Sign in</button>
+                                <button class="btn btn-primary d-grid w-100" name="publicRegisterBtn" type="submit">Sign up</button>
                             </div>
                             
                             <p class="text-center">
-                                <span>New on our platform?</span>
-                                <a href="register.php">
-                                    <span>Create an account</span>
+                                <span>Already have an account?</span>
+                                <a href="index.php">
+                                    <span>Sign in instead</span>
                                 </a>
                             </p>
                         </form>

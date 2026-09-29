@@ -133,9 +133,9 @@ $categoryR = mysqli_query($conn, $categoryQ);
                                 <div class="d-flex align-items-end mt-2">
                                     <?php
                                     if ($_SESSION['role'] == 1) {
-                                        $pwait = "SELECT COUNT(*) AS pwait FROM post WHERE postStatus = 'W'";
+                                        $pwait = "SELECT COUNT(*) AS pwait FROM post WHERE postStatus = 'W' OR postStatus = 'D'";
                                     } else {
-                                        $pwait = "SELECT COUNT(*) AS pwait FROM post WHERE postStatus = 'W' && author = '{$_SESSION['author_id']}'";
+                                        $pwait = "SELECT COUNT(*) AS pwait FROM post WHERE (postStatus = 'W' OR postStatus = 'D') && author = '{$_SESSION['author_id']}'";
                                     }
                                     $pwaitResult = mysqli_query($conn, $pwait);
                                     if ($pwaitResult && mysqli_num_rows($pwaitResult) > 0) {
@@ -230,7 +230,9 @@ $categoryR = mysqli_query($conn, $categoryQ);
                                         } elseif ($postD['postStatus'] == 'N') {
                                             echo '<span class="badge bg-label-danger me-1">Inactive</span>';
                                         } elseif ($postD['postStatus'] == 'W') {
-                                            echo '<span class="badge bg-label-warning me-1">Save Draft</span>';
+                                            echo '<span class="badge bg-label-warning me-1">Pending</span>';
+                                        } elseif ($postD['postStatus'] == 'D') {
+                                            echo '<span class="badge bg-label-secondary me-1">Draft</span>';
                                         }
                                         ?>
                                     </td>
@@ -247,7 +249,7 @@ $categoryR = mysqli_query($conn, $categoryQ);
                                                         href="update-post.php?postid=<?php echo base64_encode($postD['post_id']); ?>"><i class="bx bx-edit me-1"></i> Update Post</a>
                                                     <a class="dropdown-item"
                                                         href="manage-slugs.php?post_id=<?php echo $postD['post_id']; ?>"><i class="bx bx-link-external me-1"></i> Manage Slugs</a>
-                                                <?php } elseif ($postD['postStatus'] == 'N') { ?>
+                                                <?php } elseif ($postD['postStatus'] == 'N' || $postD['postStatus'] == 'D' || $postD['postStatus'] == 'W') { ?>
                                                     <a class="dropdown-item"
                                                         href="update-post.php?postid=<?php echo base64_encode($postD['post_id']); ?>"><i class="bx bx-edit me-1"></i> Update Post</a>
                                                     <a class="dropdown-item"

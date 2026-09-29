@@ -9,6 +9,7 @@ include_once '_subHeader.php'; ?>
         <form id="newPost" action="app/app.php" method="POST" enctype="multipart/form-data">
             <input type="hidden" name="author_id" value="<?php echo htmlspecialchars($_SESSION['author_id'] ?? ''); ?>">
             <input type="hidden" name="saveNew_post" value="1">
+            <input type="hidden" name="post_action" id="post_action" value="submit">
 
             <div class="row">
                 <!-- Main Content Column -->
@@ -138,10 +139,15 @@ include_once '_subHeader.php'; ?>
 
                             <hr class="my-3">
 
-                            <!-- Submit Button -->
-                            <button type="button" id="saveNew_post" class="btn btn-primary w-100 btn-lg shadow-sm">
-                                <i class="bx bx-plus-circle me-1"></i> Publish Post
-                            </button>
+                            <!-- Submit Buttons -->
+                            <div class="d-flex gap-2">
+                                <button type="button" id="saveDraft_post" class="btn btn-outline-secondary w-50 shadow-sm">
+                                    <i class="bx bx-save me-1"></i> Save Draft
+                                </button>
+                                <button type="button" id="saveNew_post" class="btn btn-primary w-50 shadow-sm">
+                                    <i class="bx bx-paper-plane me-1"></i> Submit
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -266,7 +272,8 @@ include_once '_subHeader.php'; ?>
         });
 
         // Form Submit Validation
-        $('#saveNew_post').click(function() {
+        function validateAndSubmit(action) {
+            $('#post_action').val(action);
             var title = $('#post_title').val().trim();
             var shortDesc = $('#post_short_desc').val().trim();
             var postImage = $('#postImage').val();
@@ -284,6 +291,14 @@ include_once '_subHeader.php'; ?>
             } else {
                 $('#newPost').submit();
             }
+        }
+
+        $('#saveNew_post').click(function() {
+            validateAndSubmit('submit');
+        });
+        
+        $('#saveDraft_post').click(function() {
+            validateAndSubmit('draft');
         });
     });
 </script>

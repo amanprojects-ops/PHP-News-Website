@@ -108,6 +108,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             redirect('../');
         }
     }
+    // Public Registration Process Code ==============================================
+    elseif (isset($_POST['publicRegisterBtn'])) {
+        $first_name = mysqli_real_escape_string($conn, trim($_POST['first_name']));
+        $last_name = mysqli_real_escape_string($conn, trim($_POST['last_name']));
+        $userMobile = mysqli_real_escape_string($conn, trim($_POST['userMobile']));
+        $userEmail = mysqli_real_escape_string($conn, trim($_POST['userEmail']));
+        $username = mysqli_real_escape_string($conn, trim($_POST['username']));
+        $password = mysqli_real_escape_string($conn, trim(md5($_POST['password'])));
+        $role = 3; // Role 3 for public users/contributors
+        $userStatus = 'Y'; // Active by default to let them login and post drafts
+
+        // Check if username or email already exists
+        $checkQ = "SELECT * FROM user WHERE username = '{$username}' OR email = '{$userEmail}'";
+        $checkRes = mysqli_query($conn, $checkQ);
+        if (mysqli_num_rows($checkRes) > 0) {
+            setSession('error', 'Username or Email already exists. Please choose a different one.');
+            redirect('../register.php');
+        } else {
+            $insertQ = "INSERT INTO user(first_name,last_name,phone,email,role,taken,username,password,userStatus) VALUES('{$first_name}','{$last_name}','{$userMobile}','{$userEmail}',{$role},0,'{$username}','{$password}','{$userStatus}')";
+            if (mysqli_query($conn, $insertQ)) {
+                setSession('success', 'Account created successfully! You can now sign in.');
+                redirect('../index.php');
+            } else {
+                setSession('error', 'Failed to create account.');
+                redirect('../register.php');
+            }
+        }
+    }
     // Post Rajection Codes =================================================
     elseif (isset($_POST['postRajected'])) {
         $postid = mysqli_real_escape_string($conn, $_POST['postR']);
@@ -265,7 +293,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $new_name = '';
         }
 
-        $addpQuery = "INSERT INTO `post`(`title`, `post_slug`, `slug_aliases`, `sort_details`, `description`, `post_img`, `category`, `author`, `post_date`, `meta_title`, `meta_description`, `meta_keywords`) VALUES ('{$post_title}', '{$post_slug_safe}', '{$finalAliasesSafe}', '{$post_details}', '{$description}', '{$new_name}', '{$post_category}', '{$author_id}', '{$date}', '{$meta_title}', '{$meta_description}', '{$meta_keywords}')";
+        $post_action = isset($_POST['post_action']) ? $_POST['post_action'] : 'submit';
+        $post_status = ($post_action === 'draft') ? 'D' : 'W';
+
+        $addpQuery = "INSERT INTO `post`(`title`, `post_slug`, `slug_aliases`, `sort_details`, `description`, `post_img`, `category`, `author`, `postStatus`, `post_date`, `meta_title`, `meta_description`, `meta_keywords`) VALUES ('{$post_title}', '{$post_slug_safe}', '{$finalAliasesSafe}', '{$post_details}', '{$description}', '{$new_name}', '{$post_category}', '{$author_id}', '{$post_status}', '{$date}', '{$meta_title}', '{$meta_description}', '{$meta_keywords}')";
 
         if (mysqli_query($conn, $addpQuery)) {
             $newPostId = mysqli_insert_id($conn);
@@ -289,7 +320,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }
             }
-            setSession('success', 'New post saved successfully with clean multi-slug routing. <strong>Waiting for approval.</strong>');
+            if ($post_status === 'W') {
+                setSession('success', 'New post submitted for approval.');
+            } else {
+                setSession('success', 'Post saved as draft successfully.');
+            }
         } else {
             setSession('error', 'Failed to save new post. <strong>Please try again.</strong>');
         }
