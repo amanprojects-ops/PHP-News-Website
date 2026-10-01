@@ -870,9 +870,12 @@ if (!function_exists('queueAuthorEmailNotification')) {
         $actorName = $_SESSION['name'] ?? ($_SESSION['username'] ?? 'System');
         $imageUrl  = '';
 
-        mysqli_stmt_bind_param($stmt, "sisssss" . "s",
-            $emailAction, $postId, $post['title'] ?? '',
-            $post['category_name'] ?? '', $postUrl, $imageUrl,
+        $postTitle    = $post['title'] ?? '';
+        $categoryName = $post['category_name'] ?? '';
+
+        mysqli_stmt_bind_param($stmt, "sissssss",
+            $emailAction, $postId, $postTitle,
+            $categoryName, $postUrl, $imageUrl,
             $actorName, $extraJson
         );
 
