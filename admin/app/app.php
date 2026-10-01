@@ -287,7 +287,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (mysqli_query($conn, $rajectQ)) {
             // Queue Telegram action log (async — instant, no API blocking)
-            queueTelegramActionLog($conn, 'reject', (int)$postid, 'both');
+            queueTelegramActionLog($conn, 'reject', (int)$postid, 'group');
             // Queue email notification to post author
             queueAuthorEmailNotification($conn, 'reject', (int)$postid);
             setSession('success', 'Post rejected successfully.');
@@ -311,7 +311,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if (mysqli_query($conn, $postApproveQ)) {
                 // Queue Telegram action logs (async — instant, no API blocking)
                 // 1. Action log: "Post Approved" notification
-                queueTelegramActionLog($conn, 'approve', (int)$postid, 'both');
+                queueTelegramActionLog($conn, 'approve', (int)$postid, 'group');
                 // 2. Published post notification (full article card with image)
                 queueTelegramActionLog($conn, 'published', (int)$postid, 'both');
                 // 3. Email notification to post author
@@ -391,7 +391,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (mysqli_query($conn, $sql)) {
             syncPostSlugs($conn, $postId, $newPrimarySlug, $finalAliasesStr);
             // Queue Telegram action log: post resubmitted for approval (async)
-            queueTelegramActionLog($conn, 'resubmit', (int)$postId, 'both');
+            queueTelegramActionLog($conn, 'resubmit', (int)$postId, 'group');
             // Queue email notification to post author
             queueAuthorEmailNotification($conn, 'resubmit', (int)$postId);
             setSession('success', 'Post updated successfully with multi-slug sync.');
@@ -451,10 +451,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             syncPostSlugs($conn, $newPostId, $clean_slug, $finalAliasesStr);
             // Queue Telegram action log (async — instant, no blocking)
             if ($post_status === 'D') {
-                queueTelegramActionLog($conn, 'draft', (int)$newPostId, 'both');
+                queueTelegramActionLog($conn, 'draft', (int)$newPostId, 'group');
                 queueAuthorEmailNotification($conn, 'draft', (int)$newPostId);
             } else {
-                queueTelegramActionLog($conn, 'new_post', (int)$newPostId, 'both');
+                queueTelegramActionLog($conn, 'new_post', (int)$newPostId, 'group');
                 queueAuthorEmailNotification($conn, 'new_post', (int)$newPostId);
             }
             if ($post_status === 'W') {
