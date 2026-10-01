@@ -271,7 +271,48 @@ if (!function_exists('ensureUserOtpSchema')) {
     }
 }
 
+// Telegram Action Queue table — stores notifications for async background processing
+if (!function_exists('ensureTelegramQueueSchema')) {
+    function ensureTelegramQueueSchema($conn) {
+        if (!$conn) return false;
+
+        static $checked = false;
+        if ($checked) return true;
+
+        // Check if table exists
+        $res = mysqli_query($conn, "SHOW TABLES LIKE 'telegram_queue'");
+        if (!$res || mysqli_num_rows($res) === 0) {
+            $sql = "CREATE TABLE `telegram_queue` (
+                `id` INT(11) NOT NULL AUTO_INCREMENT,
+                `action_type` VARCHAR(50) NOT NULL COMMENT 'approve|reject|draft|resubmit|new_post|published',
+                `post_id` INT(11) DEFAULT NULL,
+                `post_title` VARCHAR(500) DEFAULT NULL,
+                `category_name` VARCHAR(200) DEFAULT NULL,
+                `post_url` VARCHAR(1000) DEFAULT NULL,
+                `image_url` VARCHAR(1000) DEFAULT NULL,
+                `actor_name` VARCHAR(200) DEFAULT NULL COMMENT 'Who triggered the action',
+                `extra_data` TEXT DEFAULT NULL COMMENT 'JSON encoded extra info',
+                `target` VARCHAR(20) NOT NULL DEFAULT 'both' COMMENT 'group|channel|both',
+                `status` ENUM('pending','processing','sent','failed') NOT NULL DEFAULT 'pending',
+                `attempts` TINYINT(3) NOT NULL DEFAULT 0,
+                `max_attempts` TINYINT(3) NOT NULL DEFAULT 3,
+                `error_message` TEXT DEFAULT NULL,
+                `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                `processed_at` TIMESTAMP NULL DEFAULT NULL,
+                PRIMARY KEY (`id`),
+                KEY `idx_status` (`status`),
+                KEY `idx_created` (`created_at`)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;";
+            mysqli_query($conn, $sql);
+        }
+
+        $checked = true;
+        return true;
+    }
+}
+
 // Automatically run all schema checks when migration is included (already handled by ensureSettingsSchema for settings, but we need to call ensureUserOtpSchema)
 if (isset($conn) && $conn) {
     ensureUserOtpSchema($conn);
+    ensureTelegramQueueSchema($conn);
 }

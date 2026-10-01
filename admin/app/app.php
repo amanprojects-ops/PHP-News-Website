@@ -286,6 +286,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $rajectQ = "UPDATE post SET postStatus ='N' WHERE post_id='{$postid}'";
 
         if (mysqli_query($conn, $rajectQ)) {
+            // Queue Telegram action log (async — instant, no API blocking)
+            queueTelegramActionLog($conn, 'reject', (int)$postid, 'both');
+            // Queue email notification to post author
+            queueAuthorEmailNotification($conn, 'reject', (int)$postid);
             setSession('success', 'Post rejected successfully.');
         } else {
             setSession('warning', 'Failed to reject post.');
@@ -305,16 +309,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (file_exists($checkFile)) {
             $postApproveQ = "UPDATE post SET postStatus ='Y' WHERE post_id='{$postid}'";
             if (mysqli_query($conn, $postApproveQ)) {
-                // Telegram notification on post approval
-                $tgSettings = mysqli_fetch_assoc(mysqli_query($conn, "SELECT telegramEnabled, websiteUrl FROM settings LIMIT 1"));
-                if (!empty($tgSettings['telegramEnabled'])) {
-                    $tgPostRes = mysqli_query($conn, "SELECT p.*, c.category_name, c.category_slug FROM post p LEFT JOIN category c ON p.category = c.category_id WHERE p.post_id = '{$postid}' LIMIT 1");
-                    $tgPost = $tgPostRes ? mysqli_fetch_assoc($tgPostRes) : null;
-                    if ($tgPost) {
-                        $tgPost['post_url'] = getPostUrl($tgPost, rtrim($tgSettings['websiteUrl'] ?? '', '/'));
-                        sendPostToTelegram($conn, $tgPost, 'both');
-                    }
-                }
+                // Queue Telegram action logs (async — instant, no API blocking)
+                // 1. Action log: "Post Approved" notification
+                queueTelegramActionLog($conn, 'approve', (int)$postid, 'both');
+                // 2. Published post notification (full article card with image)
+                queueTelegramActionLog($conn, 'published', (int)$postid, 'both');
+                // 3. Email notification to post author
+                queueAuthorEmailNotification($conn, 'approve', (int)$postid);
                 setSession('success', 'Post approved successfully.');
             } else {
                 setSession('warning', 'Failed to approve post.');
@@ -389,6 +390,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if (mysqli_query($conn, $sql)) {
             syncPostSlugs($conn, $postId, $newPrimarySlug, $finalAliasesStr);
+            // Queue Telegram action log: post resubmitted for approval (async)
+            queueTelegramActionLog($conn, 'resubmit', (int)$postId, 'both');
+            // Queue email notification to post author
+            queueAuthorEmailNotification($conn, 'resubmit', (int)$postId);
             setSession('success', 'Post updated successfully with multi-slug sync.');
         } else {
             setSession('error', 'Failed to update post.');
@@ -444,24 +449,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (mysqli_query($conn, $addpQuery)) {
             $newPostId = mysqli_insert_id($conn);
             syncPostSlugs($conn, $newPostId, $clean_slug, $finalAliasesStr);
-            // Telegram notification for new post (pending approval — notify group only as draft alert)
-            $sQ3 = mysqli_query($conn, "SELECT * FROM settings LIMIT 1");
-            $sSet3 = $sQ3 ? mysqli_fetch_assoc($sQ3) : [];
-            if (!empty($sSet3['telegramEnabled'])) {
-                $tgPostRes2 = mysqli_query($conn, "SELECT p.*, c.category_name, c.category_slug FROM post p LEFT JOIN category c ON p.category = c.category_id WHERE p.post_id = '{$newPostId}' LIMIT 1");
-                $tgPost2 = $tgPostRes2 ? mysqli_fetch_assoc($tgPostRes2) : null;
-                if ($tgPost2) {
-                    $tgPost2['post_url'] = getPostUrl($tgPost2, rtrim($sSet3['websiteUrl'] ?? '', '/'));
-                    $tgBot2 = getTelegramBotFromSettings($conn);
-                    if ($tgBot2) {
-                        $siteName2 = $sSet3['websitename'] ?? 'News Portal';
-                        $draftMsg = "📝 <b>New Post Submitted (Pending Approval)</b>\n\n<b>" . htmlspecialchars($tgPost2['title']) . "</b>\n\n" .
-                                    "Category: <i>" . htmlspecialchars($tgPost2['category_name'] ?? '') . "</i>\n" .
-                                    "Author ID: " . htmlspecialchars($tgPost2['author'] ?? '') . "\n\n" .
-                                    "— <i>" . $siteName2 . "</i>";
-                        $tgBot2->sendMessage($draftMsg, 'group');
-                    }
-                }
+            // Queue Telegram action log (async — instant, no blocking)
+            if ($post_status === 'D') {
+                queueTelegramActionLog($conn, 'draft', (int)$newPostId, 'both');
+                queueAuthorEmailNotification($conn, 'draft', (int)$newPostId);
+            } else {
+                queueTelegramActionLog($conn, 'new_post', (int)$newPostId, 'both');
+                queueAuthorEmailNotification($conn, 'new_post', (int)$newPostId);
             }
             if ($post_status === 'W') {
                 setSession('success', 'New post submitted for approval.');
