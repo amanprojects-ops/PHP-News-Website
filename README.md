@@ -20,6 +20,8 @@ A feature-rich, high-performance PHP & MySQL Content Management System (CMS) des
 - **Category Management**: Create, update, toggle status (Active/Pending), and manage news categories.
 - **Article & Content Manager**: Rich article editor to compose, edit, approve, reject, or archive news posts.
 - **User & Staff Management**: Manage user roles, passwords, status (Active/Inactive), and profile details.
+- **Async Notification Queue**: Lightning-fast background processor ensures the admin panel never slows down, queuing Telegram and Email notifications instantly.
+- **Automated Author Emails**: Authors receive beautifully formatted HTML emails whenever their posts are approved, rejected, drafted, or published.
 - **Website Settings & SEO**: Manage website name, base URL, logo, favicon, watermark image, SEO keywords, and contact details.
 - **Visitor Traffic Insights**: Interactive dashboard displaying visitor logs and traffic metrics.
 
@@ -177,6 +179,10 @@ To enable automatic notifications and manage your website directly from Telegram
 - Click **Set Webhook**.
 - Use the **Live Connection Test** card to verify that your bot is sending messages correctly!
 
+### **4. Custom Templates & Localhost Image Uploads**
+- **Smart Formatting**: Posts sent to a **Telegram Group** automatically include the **Author's Name** (great for internal teams). Posts sent to a **Telegram Channel** use a clean, author-less format suited for public audiences.
+- **Localhost Support**: The bot is programmed to map local URLs (`http://localhost/...`) to physical absolute paths. This means rich image cards and photos will successfully upload to Telegram even when developing on `localhost` or a private network!
+
 ---
 
 ## ⏱️ **Cron Job Setup (Automated Tasks)**
@@ -186,23 +192,32 @@ The platform supports automated background tasks (like sending delayed notificat
 ### **1. Configure on Live Server (cPanel / Plesk)**
 - Open your hosting control panel (e.g., cPanel).
 - Navigate to the **Cron Jobs** section.
-- Add a new Cron Job to run every 5 or 15 minutes (depending on your needs).
-- Set the command to execute the cron script. Example using `curl` or `wget`:
+- You need to set up two cron jobs for optimal performance:
+  
+  **A. Background Queue Processor (Runs Every 1 Minute)**
+  *Processes all instant Telegram logs and Author Emails in the background without slowing down the website.*
+  ```bash
+  wget -q -O - https://yourdomain.com/cron/process-telegram-queue.php >/dev/null 2>&1
+  ```
+
+  **B. Scheduled Post Notifications (Runs Every 5 or 15 Minutes)**
+  *Scans for newly published posts and sends bulk notifications to subscribers.*
   ```bash
   wget -q -O - https://yourdomain.com/cron/post-notifications.php >/dev/null 2>&1
   ```
-  *(Alternatively, you can run the PHP script directly if your host allows: `/usr/local/bin/php /path/to/public_html/cron/post-notifications.php`)*
+  *(Alternatively, run the PHP script directly if your host allows: `/usr/local/bin/php /path/to/public_html/cron/process-telegram-queue.php`)*
 
 ### **2. Local Testing (XAMPP / WAMP)**
 If you are developing locally and want to test the Cron Job without a live server:
 - Open your web browser.
-- Navigate directly to the cron script URL:
+- Navigate directly to the cron script URLs:
   ```text
+  http://localhost/PHP-News-Website/cron/process-telegram-queue.php
   http://localhost/PHP-News-Website/cron/post-notifications.php
   ```
 - Alternatively, you can run it via the command line or PowerShell:
   ```powershell
-  php.exe C:\xampp\htdocs\PHP-News-Website\cron\post-notifications.php
+  php.exe C:\xampp\htdocs\PHP-News-Website\cron\process-telegram-queue.php
   ```
 - The script will execute once, allowing you to test if pending notifications or scheduled tasks run correctly.
 
@@ -216,6 +231,7 @@ PHP-News-Website/
 │   ├── app/                   # Backend logic & DB configuration
 │   │   ├── config.php         # Admin DB Connection configuration
 │   │   ├── _DBconnect.php     # Helper include for AJAX endpoints
+│   │   ├── telegram_bot.php   # Telegram Bot API & Notification Helpers
 │   │   └── app.php            # Form submit handlers & login logic
 │   ├── dashboard.php          # Main dashboard stats & overview
 │   ├── index.php              # Admin login page
@@ -223,7 +239,11 @@ PHP-News-Website/
 │   ├── view-post.php          # Datatable view of all posts
 │   └── setting.php            # Site configuration settings
 ├── assets/                    # Static assets (CSS, JS, Images, Uploads)
+├── cron/                      # Scheduled Tasks & Background Processes
+│   ├── process-telegram-queue.php # Async queue processor for Emails & Telegram
+│   └── post-notifications.php     # Bulk notifications scheduler
 ├── database/                  # Database helper functions
+│   ├── Mailer.php             # Email SMTP/Native Mailer class
 │   └── functions.php          # Shared utility functions & redirect helpers
 ├── install/                   # Web Installation Wizard
 │   ├── database.sql           # Database schema & initial dump data
