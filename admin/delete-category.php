@@ -2,6 +2,7 @@
 session_start();
 if (isset($_GET['check-cate'])) {
     include_once ('app/config.php');
+    include_once ('app/telegram_bot.php');
 
     $agent = mysqli_real_escape_string($conn, $_GET['check-cate']);
     $categoryid = mysqli_real_escape_string($conn, base64_decode($_GET['categoryid']));
@@ -28,6 +29,7 @@ if (isset($_GET['check-cate'])) {
                 exit();
             } else {
                 $deleteQ = "DELETE FROM `category` WHERE category_id = '{$categoryid}'";
+                queueCategoryEmailNotification($conn, 'delete', (int)$categoryid);
                 if (mysqli_query($conn, $deleteQ)) {
                     $_SESSION['success'] = 'Category deleted successfully.';
                     header('Location: view-category.php');

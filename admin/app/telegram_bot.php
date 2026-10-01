@@ -692,6 +692,14 @@ if (!function_exists('getPostStatusEmailTemplate')) {
                 'message'  => 'Your updated post has been <strong>resubmitted for review</strong>. Our team will review the changes and get back to you soon.',
                 'showLink' => false,
             ],
+            'delete' => [
+                'subject'  => '🗑️ Your Post Has Been Deleted',
+                'heading'  => 'Post Deleted',
+                'color'    => '#dc2626',
+                'icon'     => '🗑️',
+                'message'  => 'Your post has been <strong>deleted</strong> from our platform by an administrator. If you believe this was a mistake, please contact support.',
+                'showLink' => false,
+            ],
         ];
 
         $config = $actionConfig[$action] ?? [
@@ -882,6 +890,200 @@ if (!function_exists('queueAuthorEmailNotification')) {
         $ok = mysqli_stmt_execute($stmt);
         mysqli_stmt_close($stmt);
 
+        return $ok;
+    }
+}
+
+if (!function_exists('getCategoryStatusEmailTemplate')) {
+    function getCategoryStatusEmailTemplate($action, $categoryName, $authorName, $siteName) {
+        $actionConfig = [
+            'approve' => [
+                'subject' => '✅ Category Approved',
+                'heading' => 'Category Approved',
+                'color'   => '#22c55e',
+                'message' => 'Your category "<strong>' . htmlspecialchars($categoryName) . '</strong>" has been approved and is now active.'
+            ],
+            'reject' => [
+                'subject' => '❌ Category Rejected',
+                'heading' => 'Category Rejected',
+                'color'   => '#ef4444',
+                'message' => 'Your category "<strong>' . htmlspecialchars($categoryName) . '</strong>" has been rejected or disabled.'
+            ],
+            'new' => [
+                'subject' => '🆕 Category Created',
+                'heading' => 'Category Created',
+                'color'   => '#f97316',
+                'message' => 'You have successfully created the category "<strong>' . htmlspecialchars($categoryName) . '</strong>". It is pending review or active.'
+            ],
+            'update' => [
+                'subject' => '🔄 Category Updated',
+                'heading' => 'Category Updated',
+                'color'   => '#3b82f6',
+                'message' => 'Your category "<strong>' . htmlspecialchars($categoryName) . '</strong>" has been updated.'
+            ],
+            'delete' => [
+                'subject' => '🗑️ Category Deleted',
+                'heading' => 'Category Deleted',
+                'color'   => '#dc2626',
+                'message' => 'Your category "<strong>' . htmlspecialchars($categoryName) . '</strong>" has been deleted.'
+            ]
+        ];
+
+        $config = $actionConfig[$action] ?? $actionConfig['update'];
+        $safeName = htmlspecialchars($authorName);
+        $safeSite = htmlspecialchars($siteName);
+
+        $body = '
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
+            <div style="background-color: ' . $config['color'] . '; padding: 20px; text-align: center; color: #ffffff;">
+                <h2 style="margin: 0; font-size: 24px;">' . $config['heading'] . '</h2>
+            </div>
+            <div style="padding: 30px;">
+                <p style="font-size: 16px; color: #374151;">Hi <strong>' . $safeName . '</strong>,</p>
+                <p style="font-size: 15px; color: #4b5563; line-height: 1.6;">' . $config['message'] . '</p>
+            </div>
+            <div style="background-color: #f9fafb; padding: 15px; text-align: center; font-size: 12px; color: #9ca3af; border-top: 1px solid #e5e7eb;">
+                This is an automated message from ' . $safeSite . '.
+            </div>
+        </div>';
+
+        return ['subject' => $config['subject'] . ' — ' . $siteName, 'body' => $body];
+    }
+}
+
+if (!function_exists('getUserStatusEmailTemplate')) {
+    function getUserStatusEmailTemplate($action, $userName, $siteName, $loginUrl = '') {
+        $actionConfig = [
+            'approve' => [
+                'subject' => '✅ Account Approved',
+                'heading' => 'Account Approved',
+                'color'   => '#22c55e',
+                'message' => 'Your account has been approved by the administrator. You can now log in and access your dashboard.',
+                'link'    => true
+            ],
+            'reject' => [
+                'subject' => '❌ Account Rejected/Disabled',
+                'heading' => 'Account Disabled',
+                'color'   => '#ef4444',
+                'message' => 'Your account has been disabled or rejected by the administrator. Please contact support for more details.',
+                'link'    => false
+            ],
+            'new' => [
+                'subject' => '🎉 Welcome to ' . $siteName,
+                'heading' => 'Account Created',
+                'color'   => '#3b82f6',
+                'message' => 'An administrator has created a new account for you. You can now log in.',
+                'link'    => true
+            ],
+            'update' => [
+                'subject' => '🔄 Account Updated',
+                'heading' => 'Account Updated',
+                'color'   => '#a855f7',
+                'message' => 'Your account details or permissions have been updated by an administrator.',
+                'link'    => false
+            ],
+            'delete' => [
+                'subject' => '🗑️ Account Deleted',
+                'heading' => 'Account Deleted',
+                'color'   => '#dc2626',
+                'message' => 'Your account has been permanently deleted from our system.',
+                'link'    => false
+            ]
+        ];
+
+        $config = $actionConfig[$action] ?? $actionConfig['update'];
+        $safeName = htmlspecialchars($userName);
+        $safeSite = htmlspecialchars($siteName);
+
+        $linkBlock = '';
+        if ($config['link'] && !empty($loginUrl)) {
+            $linkBlock = '
+            <div style="text-align: center; margin-top: 20px;">
+                <a href="' . htmlspecialchars($loginUrl) . '" style="display:inline-block; background-color: ' . $config['color'] . '; color: #fff; text-decoration: none; padding: 10px 20px; border-radius: 5px; font-weight: bold;">Login Now</a>
+            </div>';
+        }
+
+        $body = '
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
+            <div style="background-color: ' . $config['color'] . '; padding: 20px; text-align: center; color: #ffffff;">
+                <h2 style="margin: 0; font-size: 24px;">' . $config['heading'] . '</h2>
+            </div>
+            <div style="padding: 30px;">
+                <p style="font-size: 16px; color: #374151;">Hi <strong>' . $safeName . '</strong>,</p>
+                <p style="font-size: 15px; color: #4b5563; line-height: 1.6;">' . $config['message'] . '</p>
+                ' . $linkBlock . '
+            </div>
+            <div style="background-color: #f9fafb; padding: 15px; text-align: center; font-size: 12px; color: #9ca3af; border-top: 1px solid #e5e7eb;">
+                This is an automated message from ' . $safeSite . '.
+            </div>
+        </div>';
+
+        return ['subject' => $config['subject'] . ' — ' . $siteName, 'body' => $body];
+    }
+}
+
+if (!function_exists('queueCategoryEmailNotification')) {
+    function queueCategoryEmailNotification($conn, string $action, int $categoryId) {
+        $q = mysqli_query($conn, "SELECT c.category_name, u.email, CONCAT(u.first_name, ' ', u.last_name) AS author_name 
+                                  FROM category c 
+                                  JOIN user u ON c.author = u.user_id 
+                                  WHERE c.category_id = {$categoryId} LIMIT 1");
+        $cat = $q ? mysqli_fetch_assoc($q) : null;
+        if (!$cat || empty($cat['email'])) return false;
+
+        $sQ = mysqli_query($conn, "SELECT websitename FROM settings LIMIT 1");
+        $ws = $sQ ? mysqli_fetch_assoc($sQ) : [];
+        $siteName = $ws['websitename'] ?? 'News Portal';
+
+        $template = getCategoryStatusEmailTemplate($action, $cat['category_name'], $cat['author_name'], $siteName);
+
+        if (function_exists('ensureTelegramQueueSchema')) ensureTelegramQueueSchema($conn);
+
+        $stmt = mysqli_prepare($conn, "INSERT INTO `telegram_queue` (`action_type`, `post_title`, `extra_data`, `target`, `status`) VALUES (?, ?, ?, 'email', 'pending')");
+        if (!$stmt) return false;
+
+        $emailAction = 'email_cat_' . $action;
+        $extraJson = json_encode([
+            'to_email' => $cat['email'],
+            'email_subject' => $template['subject'],
+            'email_body' => $template['body']
+        ], JSON_UNESCAPED_UNICODE);
+
+        mysqli_stmt_bind_param($stmt, "sss", $emailAction, $cat['category_name'], $extraJson);
+        $ok = mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+        return $ok;
+    }
+}
+
+if (!function_exists('queueUserEmailNotification')) {
+    function queueUserEmailNotification($conn, string $action, int $userId) {
+        $q = mysqli_query($conn, "SELECT email, CONCAT(first_name, ' ', last_name) AS user_name FROM user WHERE user_id = {$userId} LIMIT 1");
+        $user = $q ? mysqli_fetch_assoc($q) : null;
+        if (!$user || empty($user['email'])) return false;
+
+        $sQ = mysqli_query($conn, "SELECT websiteUrl, websitename FROM settings LIMIT 1");
+        $ws = $sQ ? mysqli_fetch_assoc($sQ) : [];
+        $siteName = $ws['websitename'] ?? 'News Portal';
+        $loginUrl = rtrim($ws['websiteUrl'] ?? '', '/') . '/admin/';
+
+        $template = getUserStatusEmailTemplate($action, $user['user_name'], $siteName, $loginUrl);
+
+        if (function_exists('ensureTelegramQueueSchema')) ensureTelegramQueueSchema($conn);
+
+        $stmt = mysqli_prepare($conn, "INSERT INTO `telegram_queue` (`action_type`, `post_title`, `extra_data`, `target`, `status`) VALUES (?, ?, ?, 'email', 'pending')");
+        if (!$stmt) return false;
+
+        $emailAction = 'email_usr_' . $action;
+        $extraJson = json_encode([
+            'to_email' => $user['email'],
+            'email_subject' => $template['subject'],
+            'email_body' => $template['body']
+        ], JSON_UNESCAPED_UNICODE);
+
+        mysqli_stmt_bind_param($stmt, "sss", $emailAction, $user['user_name'], $extraJson);
+        $ok = mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
         return $ok;
     }
 }

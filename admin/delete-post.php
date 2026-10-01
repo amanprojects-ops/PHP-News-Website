@@ -2,6 +2,7 @@
 session_start();
 if (isset($_GET['check'])) {
     include_once ('app/config.php');
+    include_once ('app/telegram_bot.php');
 
     $agent = mysqli_real_escape_string($conn, $_GET['check']);
     $postid = mysqli_real_escape_string($conn, base64_decode($_GET['postid']));
@@ -26,6 +27,7 @@ if (isset($_GET['check'])) {
                 unlink($imagePath);
             }
             $deleteQ = "DELETE FROM `post` WHERE post_id = '{$postid}'";
+            queueAuthorEmailNotification($conn, 'delete', (int)$postid);
             if (mysqli_query($conn, $deleteQ)) {
                 $_SESSION['success'] = 'Post deleted successfully.';
                 header('Location: view-post.php');

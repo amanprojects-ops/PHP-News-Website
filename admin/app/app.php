@@ -473,6 +473,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $rajectQ = "UPDATE category SET categoryStatus ='Y' WHERE category_id='{$categoryid}'";
 
         if (mysqli_query($conn, $rajectQ)) {
+            queueCategoryEmailNotification($conn, 'approve', (int)$categoryid);
             setSession('success', 'Category approved successfully.');
         } else {
             setSession('error', 'Failed to approve category.');
@@ -488,6 +489,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $rajectQ = "UPDATE category SET categoryStatus ='N' WHERE category_id='{$categoryid}'";
             if (mysqli_query($conn, $rajectQ)) {
+                queueCategoryEmailNotification($conn, 'reject', (int)$categoryid);
                 setSession('success', 'Category rejected successfully.');
             } else {
                 setSession('warning', 'Failed to reject category.');
@@ -508,6 +510,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $update = "UPDATE category SET category_name='{$categoryName}', category_slug='{$catSlugSafe}', categoryTitle='{$categoryTitle}' WHERE category_id = '{$category_id}'";
 
         if (mysqli_query($conn, $update)) {
+            queueCategoryEmailNotification($conn, 'update', (int)$category_id);
             setSession('success', 'Category updated successfully.');
         } else {
             setSession('error', 'Failed to update category.');
@@ -526,6 +529,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $insert = "INSERT INTO category(category_name, category_slug, categoryTitle, author) VALUES ('{$categoryName}', '{$catSlugSafe}', '{$categoryTitle}', '{$_SESSION['author_id']}')";
 
         if (mysqli_query($conn, $insert)) {
+            $newCatId = mysqli_insert_id($conn);
+            queueCategoryEmailNotification($conn, 'new', (int)$newCatId);
             setSession('success', 'Category added successfully.');
         } else {
             setSession('error', 'Failed to add category.');
@@ -538,6 +543,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $userQ = "UPDATE user SET userStatus = 'N' WHERE user_id = '{$userid}'";
 
         if (mysqli_query($conn, $userQ)) {
+            queueUserEmailNotification($conn, 'reject', (int)$userid);
             setSession('success', 'User rejected successfully.');
         } else {
             setSession('warning', 'Failed to reject user.');
@@ -550,6 +556,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $userQ = "UPDATE user SET userStatus = 'Y' WHERE user_id = '{$userid}'";
 
         if (mysqli_query($conn, $userQ)) {
+            queueUserEmailNotification($conn, 'approve', (int)$userid);
             setSession('success', 'User approved successfully.');
         } else {
             setSession('error', 'Failed to approve user.');
@@ -568,6 +575,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $updateQ = "UPDATE `user` SET `first_name`='{$first_name}',`last_name`='{$last_name}',`phone`='{$userMobile}',`email`='{$userEmail}',`role`= {$role} WHERE user_id ='{$user_id}'";
 
         if (mysqli_query($conn, $updateQ)) {
+            queueUserEmailNotification($conn, 'update', (int)$user_id);
             setSession('success', 'User data updated successfully.');
         } else {
             setSession('error', 'Failed to update user data.');
@@ -588,6 +596,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $insertQ = "INSERT INTO user(first_name,last_name,phone,email,role,taken,username,password)VALUES('{$first_name}','{$last_name}','{$userMobile}','{$userEmail}',{$role},'{$user_id}','{$username}','{$password}')";
 
         if (mysqli_query($conn, $insertQ)) {
+            $newUserId = mysqli_insert_id($conn);
+            queueUserEmailNotification($conn, 'new', (int)$newUserId);
             setSession('success', 'New user created successfully.');
         } else {
             setSession('error', 'Failed to create new user.');

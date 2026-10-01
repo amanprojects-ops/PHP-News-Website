@@ -3,6 +3,7 @@ session_start();
 if (isset($_GET['check-user'])) {
     // Trying To the database
     include_once ('app/config.php');
+    include_once ('app/telegram_bot.php');
     // Store to the dynamic url data in variable -------------------
     $userid = mysqli_real_escape_string($conn, trim(base64_decode($_GET['userid'])));
     $sessin_user = mysqli_real_escape_string($conn, trim(base64_decode($_GET['check-user'])));
@@ -28,6 +29,7 @@ if (isset($_GET['check-user'])) {
                 exit();
             } else {
                 $deleteQ = "DELETE FROM `user` WHERE user_id = '{$userid}'";
+                queueUserEmailNotification($conn, 'delete', (int)$userid);
                 if (mysqli_query($conn, $deleteQ)) {
                     $_SESSION['success'] = 'User deleted successfully.';
                     header('Location: view-user.php');
