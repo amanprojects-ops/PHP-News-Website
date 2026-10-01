@@ -36,13 +36,8 @@ function qLog(string $message): void
 }
 
 // ── DB Connection ─────────────────────────────────────────────────────────────
-$hostname = 'localhost';
-$username = 'root';
-$password = '';
-$dbname   = 'blog2';
-
-$conn = mysqli_connect($hostname, $username, $password, $dbname);
-if (!$conn) {
+require_once $rootDir . '/config.php';
+if (!isset($conn) || !$conn) {
     qLog("ERROR: Cannot connect to database.");
     exit(1);
 }

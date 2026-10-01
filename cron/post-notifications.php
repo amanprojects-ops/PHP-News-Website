@@ -31,13 +31,8 @@ require_once $rootDir . '/database/migration.php';
 require_once $rootDir . '/admin/app/telegram_bot.php';
 
 // ── DB Connection ─────────────────────────────────────────────────────────────
-$hostname = 'localhost';
-$username = 'root';
-$password = '';
-$dbname   = 'blog2';
-
-$conn = mysqli_connect($hostname, $username, $password, $dbname);
-if (!$conn) {
+require_once $rootDir . '/config.php';
+if (!isset($conn) || !$conn) {
     cronLog("ERROR: Cannot connect to database.");
     exit(1);
 }
