@@ -140,5 +140,13 @@ $footer_desc = $settings['footerdesc'] ?? '';
   <!-- Custom Footer Scripts -->
   <?php echo $settings['customFooterCode']; ?>
 <?php endif; ?>
+
+<!-- Background Auto-Queue Processor (Fallback if Cron Job is not set) -->
+<script>
+  setTimeout(function() {
+    fetch('cron/process-telegram-queue.php', { method: 'GET', cache: 'no-cache' }).catch(() => {});
+  }, 2000);
+</script>
+
 </body>
 </html>

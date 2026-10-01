@@ -102,6 +102,16 @@
                 });
               });
 
+              // Background Auto-Queue Processor (Fallback if Cron Job is not set)
+              setTimeout(function() {
+                $.ajax({
+                  url: '../cron/process-telegram-queue.php',
+                  type: 'GET',
+                  cache: false,
+                  global: false
+                });
+              }, 2000);
+
             });
           </script>
 
