@@ -17,8 +17,8 @@
  *   Arguments: C:\xampp\htdocs\PHP-News-Website\cron\post-notifications.php
  *   Schedule: Every 5 minutes
  *
- * NOTE: Post writer email notifications are intentionally NOT sent here.
- *       Email notifications for writers are managed separately by system events in app.php.
+ * NOTE: Post writer email notifications are handled by the queue processor
+ *       (cron/process-telegram-queue.php) via queueAuthorEmailNotification() in app.php.
  */
 
 // ── Bootstrap ─────────────────────────────────────────────────────────────────
